@@ -163,6 +163,16 @@ const Net={isHost:false,myId:null,code:null,peer:null,conns:{},bc:null,hostConn:
 .lobby .pl div{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04)}
 .lobby .dot{width:14px;height:14px;border-radius:50%;flex:none}
 .lobby .err{color:#ff9b7a;min-height:1.2em}
+.lobby .in.wide{width:min(760px,100%)}
+.lobby .caps{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+@media (max-width:640px){.lobby .caps{grid-template-columns:repeat(3,1fr)}}
+.lobby button.cap{padding:0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:#120c08;border:2px solid rgba(224,180,90,.25);font-size:14px;transition:transform .2s,border-color .2s}
+.lobby button.cap img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.lobby button.cap .cn{font-family:"IM Fell English SC",Georgia,serif;font-size:16px;color:var(--c);padding-top:4px;filter:brightness(1.4)}
+.lobby button.cap .cw{font-size:12px;color:#8a7a60;padding:0 4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.lobby button.cap:hover:not(:disabled){transform:translateY(-3px);border-color:#e0b45a}
+.lobby button.cap.mine{border-color:var(--c);box-shadow:0 0 0 2px var(--c),0 0 24px var(--c)}.lobby button.cap.mine .cw{color:#f3e6c8}
+.lobby button.cap:disabled{opacity:.35}
 .lobby .small{font-size:14px;color:#8a7a60}
 .lobby .rules{text-align:left;font-size:15px;color:#cdbd98;background:rgba(255,255,255,.04);border-radius:10px;padding:8px 12px}.lobby .rules summary{cursor:pointer;color:#e0b45a}.lobby .rules li{margin:6px 0}.lobby .rules b{color:#f3e6c8}
 .banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:30;background:#5a1d14;color:#fff;padding:10px 16px;border-radius:10px;font-family:Georgia,serif;max-width:calc(100% - 32px)}`;document.head.appendChild(st)}
@@ -188,12 +198,16 @@ function banner(t){const b=document.createElement("div");b.className="banner";b.
 function myName(){const n=$("lName").value.trim()||"Pirata";try{localStorage.setItem("archi-name",n)}catch(e){}return n}
 function lobbyWait(html){$("lin").innerHTML=html}
 $("lCreate").onclick=()=>{const name=myName();const code=Array.from({length:4},()=>"ABCDEFGHJKLMNPQRSTUVWXYZ"[Math.floor(Math.random()*24)]).join("");$("lErr").textContent="Creando sala…";
- Net.host(code,()=>{H.players=[{id:"h",name}];renderHostLobby()},e=>{$("lErr").textContent=e})};
+ Net.host(code,()=>{H.players=[{id:"h",name,cap:0}];renderHostLobby()},e=>{$("lErr").textContent=e})};
 $("lJoin").onclick=()=>{const name=myName();const code=$("lCode").value.trim().toUpperCase();if(code.length!==4){$("lErr").textContent="El código tiene 4 letras.";return}$("lErr").textContent="Conectando…";
- Net.join(code,()=>{Net.toHost({t:"join",name,id:Net.myId});lobbyWait(`<h1>Archipiélago</h1><div class="sub">Sala ${esc(code)}</div><div class="pl" id="lPl"></div><div class="small">Esperando a que el anfitrión zarpe…</div>`)},e=>{$("lErr").textContent=e})};
-function renderPlayers(list){const el=$("lPl");if(!el)return;el.innerHTML=list.map((p,i)=>`<div><span class="dot" style="background:${CAPS[i].c}"></span><span>${esc(p.name)}</span><span class="small" style="margin-left:auto">${CAPS[i].n}</span></div>`).join("")}
+ Net.join(code,()=>{Net.toHost({t:"join",name,id:Net.myId});lobbyWait(`<h1>Archipiélago</h1><div class="sub">Sala ${esc(code)} · elige tu capitán</div><div class="caps" id="lCaps"></div><div class="small">Esperando a que el anfitrión zarpe…</div>`);$("lin").classList.add("wide");renderPlayers(LP)},e=>{$("lErr").textContent=e})};
+let LP=[];
+function renderPlayers(list){LP=list;const el=$("lPl");if(el)el.innerHTML=list.map(p=>`<div><span class="dot" style="background:${CAPS[p.cap].c}"></span><span>${esc(p.name)}${p.id===Net.myId?" (tú)":""}</span><span class="small" style="margin-left:auto">${CAPS[p.cap].n}</span></div>`).join("");
+ const g=$("lCaps");if(!g)return;g.innerHTML=CAPS.map((c,k)=>{const o=list.find(p=>p.cap===k);const mine=o&&o.id===Net.myId;return `<button class="cap ${mine?"mine":""}" data-k="${k}" ${o&&!mine?"disabled":""} style="--c:${c.c}"><img alt="" src="retratos/${c.n.toLowerCase()}.jpg"><span class="cn">${c.n}</span><span class="cw">${o?esc(o.name):"libre"}</span></button>`}).join("");
+ g.querySelectorAll("button.cap").forEach(b=>b.onclick=()=>Net.toHost({t:"cap",c:+b.dataset.k}))}
+const CAPDESC=["Capitana Brasa","Bruno el Forjado","Nadia la Inventora","Viejo Salitre","Lupe la Elegante","Kai el Grumete"];
 function renderHostLobby(){const url=location.origin+location.pathname+"?sala="+Net.code+(LOCAL?"&local":"");
- lobbyWait(`<h1>Archipiélago</h1><div class="sub">Pasa este código a tus amigos</div><div class="code">${Net.code}</div><div class="small">o este enlace: <span style="user-select:all;word-break:break-all">${esc(url)}</span></div><div class="pl" id="lPl"></div><button class="pri" id="lStart">Zarpar</button><div class="small" id="lHint"></div>`);
+ lobbyWait(`<h1>Archipiélago</h1><div class="sub">Pasa este código a tus amigos</div><div class="code">${Net.code}</div><div class="small">o este enlace: <span style="user-select:all;word-break:break-all">${esc(url)}</span></div><div class="sub" style="margin:4px 0 -4px">Elige tu capitán</div><div class="caps" id="lCaps"></div><button class="pri" id="lStart">Zarpar</button><div class="small" id="lHint"></div>`);$("lin").classList.add("wide");
  renderPlayers(H.players);$("lStart").disabled=H.players.length<2&&!QS.has("solo");$("lHint").textContent=H.players.length<2?"Hacen falta al menos 2 piratas.":H.players.length+" piratas. El mapa se ajusta a vosotros.";
  $("lStart").onclick=()=>hostStart()}
 
@@ -202,7 +216,8 @@ const H={players:[],orders:{},G:null};
 function hostRecv(from,m){
  if(m.t==="join"){if(H.G){const nm=String(m.name).slice(0,14).toLowerCase();const p=H.G.players.find(p=>p.gone&&p.name.toLowerCase()===nm)||H.G.players.find(p=>p.name.toLowerCase()===nm);
    if(p){p.id=from;p.gone=false;p.ready=false;delete H.orders[p.i];Net.toOne(from,{t:"start",G:H.G});Net.toAll({t:"ready",ready:H.G.players.map(p=>p.ready),gone:H.G.players.map(p=>p.gone)});banner(p.name+" ha vuelto a la partida.")}
-   else Net.toOne(from,{t:"full"});return}if(H.players.length>=6||H.players.some(p=>p.id===from))return;H.players.push({id:from,name:String(m.name).slice(0,14)});Net.toAll({t:"lobby",players:H.players});renderHostLobby();return}
+   else Net.toOne(from,{t:"full"});return}if(H.players.length>=6||H.players.some(p=>p.id===from))return;let cap=0;while(H.players.some(p=>p.cap===cap))cap++;H.players.push({id:from,name:String(m.name).slice(0,14),cap});Net.toAll({t:"lobby",players:H.players});renderHostLobby();return}
+ if(m.t==="cap"&&!H.G){const p=H.players.find(p=>p.id===from);const c=m.c|0;if(p&&c>=0&&c<6&&!H.players.some(q=>q.cap===c&&q!==p)){p.cap=c;Net.toAll({t:"lobby",players:H.players});renderHostLobby()}return}
  if(m.t==="orders"&&H.G&&H.G.phase==="orders"){const i=H.G.players.findIndex(p=>p.id===from);if(i<0)return;H.orders[i]=m.o;H.G.players[i].ready=true;Net.toAll({t:"ready",ready:H.G.players.map(p=>p.ready)});hostMaybeResolve();return}
 }
 function hostLeft(id){if(!H.G){H.players=H.players.filter(p=>p.id!==id);Net.toAll({t:"lobby",players:H.players});renderHostLobby();return}
@@ -210,7 +225,7 @@ function hostLeft(id){if(!H.G){H.players=H.players.filter(p=>p.id!==id);Net.toAl
 function hostMaybeResolve(){if(H.G.players.every(p=>p.ready||p.gone))setTimeout(()=>{if(H.G.phase==="orders")hostResolve()},400)}
 function hostStart(){if(H.G)return;const np=H.players.length;const deck=[];CARD_LIST.forEach(c=>{for(let i=0;i<c[3];i++)deck.push(c[0])});shuffle(deck);
  H.G={seed:1000+Math.floor(Math.random()*90000),np,round:1,phase:"orders",target:np<=2?8:np<=4?10:12,treasures:Math.max(1,np-1),
-  players:H.players.map((p,i)=>({id:p.id,name:p.name,i,fame:0,rum:3,cannons:2,hand:[deck.pop(),deck.pop(),deck.pop()].slice(0,3),cell:null,home:null,ready:false,looted:[],hideFrom:{},got:false,faroles:false,gone:false})),deck,winner:-1};
+  players:H.players.map((p,i)=>({id:p.id,name:p.name,i,cap:p.cap,fame:0,rum:3,cannons:2,hand:[deck.pop(),deck.pop(),deck.pop()].slice(0,3),cell:null,home:null,ready:false,looted:[],hideFrom:{},got:false,faroles:false,gone:false})),deck,winner:-1};
  H.orders={};Net.toAll({t:"start",G:H.G})}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const CARD_LIST=[["viento-a-favor","Viento a favor","ventaja",3,"Este turno navegas hasta 5 casillas."],

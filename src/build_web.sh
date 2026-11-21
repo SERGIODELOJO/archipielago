@@ -6,7 +6,7 @@ mkdir -p $OUT/lib $OUT/tex
 cp $SP/t3/package/build/three.min.js $OUT/lib/
 for f in controls/OrbitControls.js objects/Water.js objects/Sky.js; do cp $SP/t3/package/examples/js/$f $OUT/lib/; done
 cp $SP/pj/package/dist/peerjs.min.js $SP/t3/package/examples/js/loaders/GLTFLoader.js $OUT/lib/
-mkdir -p $OUT/modelos; for m in barco-galeon isla-bosque isla-lona isla-hierro isla-ron isla-perlas; do cp /mnt/project-files/juegos/modelos/$m.glb $OUT/modelos/; done
+mkdir -p $OUT/modelos; for m in barco-galeon brasa bruno nadia salitre lupe kai isla-bosque isla-lona isla-hierro isla-ron isla-perlas; do cp /mnt/project-files/juegos/modelos/$m.glb $OUT/modelos/; done
 cp /mnt/project-files/juegos/tableros/tex/waternormals.jpg /mnt/project-files/juegos/tableros/tex/lavatile.jpg $OUT/tex/
 B=$(date +%s)
 cat > $OUT/index.html <<HTML
@@ -34,5 +34,6 @@ HTML
 cat $SP/helpers.js $SP/types.js $SP/web_lobby.js > $OUT/game.js
 cat $SP/web_world_gen.js $SP/g_scene.js $SP/g_cardcss.js $SP/web_world_rest.js $SP/web_world_game.js > $OUT/world.js
 python3 $SP/cards_img.py $OUT >/dev/null
+mkdir -p $OUT/retratos; cp $SP/retratos/*.jpg $OUT/retratos/
 touch $OUT/.nojekyll
 node --check $OUT/game.js && node --check $OUT/world.js && echo OK

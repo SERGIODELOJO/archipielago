@@ -12,7 +12,7 @@ const key=c=>c.q+","+c.r;
 const CELLS=[],CM={};for(let q=-RAD;q<=RAD;q++)for(let r=-RAD;r<=RAD;r++){if(Math.abs(q+r)<=RAD){const c={q,r,x:wx(q,r),z:wz(q,r),d:cdist({q,r},{q:0,r:0})};CELLS.push(c);CM[key(c)]=c}}
 const NB=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
 const neighbors=c=>NB.map(([a,b])=>CM[(c.q+a)+","+(c.r+b)]).filter(Boolean);
-const PCOL=CAPS.map(c=>c.c);
+const PCOL=GS.players.map(p=>CAPS[p.cap||0].c);
 const used=new Set();
 const HOMES=[];for(let k=0;k<NP;k++){const a=-Math.PI/2+k*2*Math.PI/NP+rnd()*.3;const W=RAD*HS*Math.sqrt(3);let best=null,bd=1e9;CELLS.filter(c=>c.d===RAD&&!used.has(key(c))).forEach(c=>{const d=(c.x-Math.cos(a)*W)**2+(c.z-Math.sin(a)*W)**2;if(d<bd){bd=d;best=c}});HOMES.push(best);used.add(key(best))}
 let VOL=null;{const cs=CELLS.filter(c=>c.d<=RAD-2).map(c=>({c,m:Math.min(...HOMES.map(h=>cdist(h,c)))})).filter(o=>o.m>=Math.max(3,RAD-1));VOL=(cs.length?cs:CELLS.filter(c=>c.d<=1).map(c=>({c})))[Math.floor(rnd()*Math.max(1,cs.length))].c;used.add(key(VOL));neighbors(VOL).forEach(n=>used.add(key(n)))}
@@ -392,7 +392,7 @@ const seq=(fns,done)=>{let k=0;const go=()=>{if(k>=fns.length){done&&done();retu
 function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);const oldG=GS;
  // la ronda ya está cerrada: aplica faroles y efectos visibles de los demás
  GS.players.forEach((p,i)=>{p.faroles=m.G.players[i].faroles;p.fx=m.G.players[i].fx;p.hideFrom=m.G.players[i].hideFrom});
- toggleMap(false);setSpy(false);hideCov();document.body.classList.add("sailing");$("hRound").textContent=`RONDA ${GS.round} · RESOLVIENDO`;
+ toggleMap(false);setSpy(false);hideCov();document.body.classList.add("sailing");sndTension(1);sndHit("drum");$("hRound").textContent=`RONDA ${GS.round} · RESOLVIENDO`;
  const pre=mine.filter(e=>e.k==="card");
  const steps=Math.max(...m.paths.map(p=>p.length))-1;
  const fns=[];
@@ -401,15 +401,15 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
  for(let s=1;s<=steps;s++)fns.push(nx=>{SHIPS.forEach((sh,i)=>{const a=m.paths[i][s-1],b=m.paths[i][s];if(!b)return;sh.userData.from=cellOf(a);sh.userData.to=cellOf(b);sh.userData.t=0});
   const bat=mine.filter(e=>e.k==="battle"&&e.step===s);
   sailT=0;sailDone=()=>{sailDone=null;reveal(curCell(myIdx),2+(me().fx&&me().fx.vista?1:0));updateVisibility();
-   if(bat.length){const e=bat[0];cannonFx(e.at);rcard(e.lost?"DERROTA":e.txt.startsWith("Abordaje igualado")?"EMPATE":"VICTORIA","Abordaje");
+   if(bat.length){const e=bat[0];cannonFx(e.at);sndHit("battle");rcard(e.lost?"DERROTA":e.txt.startsWith("Abordaje igualado")?"EMPATE":"VICTORIA","Abordaje");
     setTimeout(()=>{note(e.txt,8);if(e.lost){const h=cellOf(GS.players[myIdx].home);fadeJump(myShip,cellOf(m.G.players[myIdx].home))}nx()},1800)}else nx()}});
  fns.push(nx=>{// barcos enviados a puerto vuelven allí
   m.sent.forEach((s,i)=>{if(s){const h=cellOf(m.G.players[i].home);fadeJump(SHIPS[i],h)}});setTimeout(nx,m.sent.some(Boolean)?900:10)});
- mine.filter(e=>["chest","treasure","erupt"].includes(e.k)).forEach(e=>fns.push(nx=>{if(e.k==="erupt")eruptFx();if(e.k==="treasure")rcard("TESORO","+3 de fama");
+ mine.filter(e=>["chest","treasure","erupt"].includes(e.k)).forEach(e=>fns.push(nx=>{sndHit(e.k);if(e.k==="erupt")eruptFx();if(e.k==="treasure")rcard("TESORO","+3 de fama");
   const t=document.createElement("div");t.className="fc big";t.dataset.t=e.k==="chest"?"ventaja":e.k==="treasure"?"ventaja":"sabotaje";t.innerHTML=`<div class="art">${e.k==="erupt"?"🌋":e.k==="treasure"?"✦":"⚿"}</div><div class="bot"><div class="tp">${e.k==="chest"?"Cofre":e.k==="treasure"?"Tesoro":"Volcán"}</div><div class="nm">${e.k==="chest"?"Exploración":e.k==="treasure"?"El tesoro del volcán":"¡Erupción!"}</div><div class="tx">${e.txt}</div></div>`;
   t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)}));
  const pub=mine.filter(e=>e.k==="note");if(pub.length)fns.push(nx=>{note(pub.map(e=>e.txt).join(" "),9);setTimeout(nx,400)});
- fns.push(nx=>{GS=m.G;snapShips();document.body.classList.remove("sailing");route=[];prepared=null;bet=0;
+ fns.push(nx=>{GS=m.G;snapShips();sndTension(0);document.body.classList.remove("sailing");route=[];prepared=null;bet=0;
   if(GS.phase==="over"){gameOver();nx();return}
   rcard("ÓRDENES SECRETAS","Ronda "+GS.round);renderOrders();
   const d=mine.find(e=>e.k==="drew");setTimeout(()=>{if(d){const b=cardEl(d.card,true);b.classList.add("flip");showCov([b],"Robas una Carta de Fortuna.",[["A la mano",()=>{hideCov();arrivalNote()},true]],8000)}else arrivalNote();nx()},2400)});
@@ -431,6 +431,53 @@ function eruptFx(){for(let k=0;k<30;k++)setTimeout(()=>puff(VOL.x+(Math.random()
 const flash=new THREE.PointLight(C("#ffa050"),0,120,2);scene.add(flash);
 function fadeJump(ship,c){ship.userData.from=null;ship.userData.pos.set(c.x,0,c.z)}
 
+// ---------- cámara en tercera persona, detrás del capitán ----------
+scene.add(camera);const camT=new THREE.Vector3(),camL=new THREE.Vector3();let introK=QS.has("nointro")?1:0;const CAMD=+(QS.get("camd")||6.5),CAMH=+(QS.get("camh")||2.7),CAMEL=+(QS.get("camel")||.3),CAMS=+(QS.get("cams")||2.2);
+function thirdPerson(dt){if(introK<1){introK=Math.min(1,introK+dt/7);if(introK>=1)introDone()}const e=1-Math.pow(1-introK,3);
+ myShip.updateMatrixWorld();camT.set(CAPX,CAPY+CAMH,0);myShip.localToWorld(camT);
+ const az=myShip.userData.heading+yaw+(1-e)*2.4;const el=THREE.MathUtils.lerp(1.05,Math.max(.06,Math.min(1.35,CAMEL-pitch*.9)),e);const D=THREE.MathUtils.lerp(260,CAMD+Math.abs(Math.sin(yaw))*12+(1-Math.cos(yaw))*3,e);const sx=Math.sin(az)*CAMS*e*Math.cos(yaw),sz=Math.cos(az)*CAMS*e*Math.cos(yaw);
+ camera.position.set(camT.x-Math.cos(az)*Math.cos(el)*D+sx,camT.y+Math.sin(el)*D,camT.z+Math.sin(az)*Math.cos(el)*D+sz);if(camera.position.y<1.4)camera.position.y=1.4;
+ const ahead=spy?80:8;camL.set(camT.x+Math.cos(az)*ahead+sx,camT.y+(spy?0:.4)-(1-e)*2,camT.z-Math.sin(az)*ahead+sz);camera.lookAt(camL)}
+
+// ---------- sonido ambiente generado (por defecto solo en el anfitrión) ----------
+const SND={on:false,ctx:null,master:null,tension:null};
+function sndInit(){if(SND.ctx)return;const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const ctx=new A();SND.ctx=ctx;const M=ctx.createGain();M.gain.value=0;M.connect(ctx.destination);SND.master=M;
+ const len=ctx.sampleRate*4,buf=ctx.createBuffer(1,len,ctx.sampleRate),d=buf.getChannelData(0);let b=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;b=(b+.02*w)/1.02;d[i]=b*3.5}
+ const noise=()=>{const s=ctx.createBufferSource();s.buffer=buf;s.loop=true;s.start();return s};
+ // olas: ruido marrón con vaivén lento
+ const sea=noise(),seaF=ctx.createBiquadFilter();seaF.type="lowpass";seaF.frequency.value=500;const seaG=ctx.createGain();seaG.gain.value=.55;sea.connect(seaF).connect(seaG).connect(M);
+ const lfo=ctx.createOscillator();lfo.frequency.value=.11;const lg=ctx.createGain();lg.gain.value=.35;lfo.connect(lg).connect(seaG.gain);lfo.start();
+ // viento: ruido filtrado alto que silba
+ const wind=noise(),wf=ctx.createBiquadFilter();wf.type="bandpass";wf.frequency.value=900;wf.Q.value=1.4;const wg=ctx.createGain();wg.gain.value=.05;wind.connect(wf).connect(wg).connect(M);
+ const l2=ctx.createOscillator();l2.frequency.value=.07;const l2g=ctx.createGain();l2g.gain.value=500;l2.connect(l2g).connect(wf.frequency);l2.start();
+ // fondo oscuro: dos tonos graves desafinados
+ const dr=ctx.createGain();dr.gain.value=.05;dr.connect(M);[55,82.4,55.6].forEach(f=>{const o=ctx.createOscillator();o.type="sawtooth";o.frequency.value=f;const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=180;o.connect(lp).connect(dr);o.start()});
+ // tensión: pulso grave que sube en la resolución
+ const tg=ctx.createGain();tg.gain.value=0;tg.connect(M);const to=ctx.createOscillator();to.type="triangle";to.frequency.value=41;const tl=ctx.createOscillator();tl.frequency.value=1.6;const tlg=ctx.createGain();tlg.gain.value=.5;const tv=ctx.createGain();tv.gain.value=.5;tl.connect(tlg).connect(tv.gain);to.connect(tv).connect(tg);to.start();tl.start();SND.tension=tg}
+function sndSet(on){SND.on=on;try{localStorage.setItem("archi-snd",on?"1":"0")}catch(e){}if(on){sndInit();if(!SND.ctx)return;SND.ctx.resume();SND.master.gain.setTargetAtTime(.8,SND.ctx.currentTime,.8)}else if(SND.ctx)SND.master.gain.setTargetAtTime(0,SND.ctx.currentTime,.3);$("bSnd").textContent=on?"Sonido: sí":"Sonido: no";$("bSnd").classList.toggle("on",on)}
+function sndTension(v){if(SND.on&&SND.tension)SND.tension.gain.setTargetAtTime(v*.35,SND.ctx.currentTime,1.2)}
+function sndHit(kind){if(!SND.on||!SND.ctx)return;const ctx=SND.ctx,t=ctx.currentTime;
+ const boom=(at,f,g)=>{const o=ctx.createOscillator();o.type="sine";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(30,t+at+.5);const gg=ctx.createGain();gg.gain.setValueAtTime(g,t+at);gg.gain.exponentialRampToValueAtTime(.001,t+at+.8);o.connect(gg).connect(SND.master);o.start(t+at);o.stop(t+at+.9)};
+ if(kind==="battle")for(let k=0;k<7;k++)boom(k*.28+Math.random()*.1,90+Math.random()*40,.9);
+ if(kind==="drum")[0,.5,1,1.25,1.5].forEach(a=>boom(a,70,.6));
+ if(kind==="erupt")for(let k=0;k<10;k++)boom(k*.2,45,.8);
+ if(kind==="treasure"||kind==="chest"){[523,659,784,1046].forEach((f,k)=>{const o=ctx.createOscillator();o.type="triangle";o.frequency.value=f;const g=ctx.createGain();g.gain.setValueAtTime(.0001,t+k*.12);g.gain.exponentialRampToValueAtTime(.18,t+k*.12+.02);g.gain.exponentialRampToValueAtTime(.0001,t+k*.12+1.2);o.connect(g).connect(SND.master);o.start(t+k*.12);o.stop(t+k*.12+1.3)})}}
+{const b=document.createElement("button");b.id="bSnd";$("bMap").parentElement.appendChild(b);let pref=null;try{pref=localStorage.getItem("archi-snd")}catch(e){}
+ const want=pref!==null?pref==="1":Net.isHost;b.textContent=want?"Sonido: sí":"Sonido: no";SND.want=want;
+ b.onclick=()=>sndSet(!SND.on);
+ // los navegadores solo dejan sonar tras un toque
+ if(want){const go=()=>{sndSet(true);removeEventListener("pointerdown",go);removeEventListener("keydown",go)};addEventListener("pointerdown",go);addEventListener("keydown",go)}}
+
+// ---------- intro ----------
+{const st=document.createElement("style");st.textContent=`.intro{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-family:"IM Fell English SC",Georgia,serif;color:#f3e6c8;text-shadow:0 2px 18px #000,0 0 40px rgba(0,0,0,.8);text-align:center;padding:16px}
+.intro .t{font-size:clamp(44px,9vw,110px);letter-spacing:.08em;opacity:0;animation:inT 6.5s ease forwards}
+.intro .s{font-family:"IM Fell English",Georgia,serif;font-style:italic;font-size:clamp(17px,2.4vw,26px);color:#e8d8b0;opacity:0;animation:inT 6.5s ease .9s forwards;max-width:760px}
+.intro .k{font-size:14px;letter-spacing:.35em;color:#e0b45a;opacity:0;animation:inT 6.5s ease .3s forwards}
+@keyframes inT{0%{opacity:0;transform:translateY(10px)}18%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+body.intro-on .hud,body.intro-on .orders,body.intro-on .hand{opacity:0!important;pointer-events:none}`;document.head.appendChild(st)}
+const introEl=document.createElement("div");introEl.className="intro";
+if(introK<1){document.body.classList.add("intro-on","sailing");const c=CAPDESC[me().cap||0];introEl.innerHTML=`<div class="k">RONDA ${GS.round} · ${GS.np} PIRATAS</div><div class="t">Archipiélago</div><div class="s">${esc(c)} leva anclas y se adentra en la niebla. En algún lugar, la columna de humo de un volcán guarda un tesoro… y no eres el único que lo busca.</div>`;document.body.appendChild(introEl)}
+function introDone(){document.body.classList.remove("intro-on","sailing");introEl.remove();rcard("ÓRDENES SECRETAS","Ronda "+GS.round);setTimeout(()=>note(`Eres ${me().name}: ${CAPDESC[me().cap||0]}. Arrastra para mirar alrededor. Abre el mapa (M) para trazar tu ruta, elige carta y confirma tus órdenes.`,12),900)}
 // ---------- bucle ----------
 let sailT=0,sailDone=null;const SAILDUR=3.6;
 const fadeMats=[];scene.traverse(o=>{if(o.material&&o.material.uniforms&&o.material.uniforms.uFD)fadeMats.push(o.material)});
@@ -443,8 +490,8 @@ function placeShips(dt){SHIPS.forEach((s,i)=>{const u=s.userData;if(u.from){u.t=
 function frame(){const dt=Math.min(clock.getDelta(),.05);T+=dt;anim.forEach(f=>f(T,dt));placeShips(dt);
  if(!myShip.userData.from)myShip.userData.wheel.rotation.x=Math.sin(T*.4)*.15;
  const sp=myShip.userData.pos;
- yaw+=(yawT-yaw)*Math.min(1,dt*8);pitch+=(pitchT-pitch)*Math.min(1,dt*8);camera.rotation.set(pitch,-Math.PI/2+yaw,0);if(Math.abs(camera.fov-fovT)>.05){camera.fov+=(fovT-camera.fov)*Math.min(1,dt*7);camera.updateProjectionMatrix()}
- scene.fog.density+=(fogT-scene.fog.density)*Math.min(1,dt*4);fadeMats.forEach(m=>m.uniforms.uFD.value=scene.fog.density);
+ yaw+=(yawT-yaw)*Math.min(1,dt*8);pitch+=(pitchT-pitch)*Math.min(1,dt*8);thirdPerson(dt);if(Math.abs(camera.fov-fovT)>.05){camera.fov+=(fovT-camera.fov)*Math.min(1,dt*7);camera.updateProjectionMatrix()}
+ scene.fog.density+=((introK<1?THREE.MathUtils.lerp(.0045,fogT,Math.pow(introK,2.2)):fogT)-scene.fog.density)*Math.min(1,dt*4);fadeMats.forEach(m=>m.uniforms.uFD.value=scene.fog.density);
  mist.children.forEach(s=>{s.userData.a+=s.userData.v*dt;s.position.set(sp.x+Math.cos(s.userData.a)*s.userData.r,s.userData.h,sp.z+Math.sin(s.userData.a)*s.userData.r);s.material.opacity=s.userData.o*Math.min(1,(s.userData.r-20)/25)*(spy?.35:1)});
  key1.position.copy(sp).add(tmp.set(-60,90,40));key1.target.position.copy(sp);dome.position.copy(sp);
  for(let i=fxs.length-1;i>=0;i--){const f=fxs[i];f.t+=dt;const k=f.t/f.life;f.s.scale.setScalar(f.sz*(1+k*2));f.s.position.y+=dt*2;f.s.material.opacity=.9*(1-k);if(k>=1){scene.remove(f.s);f.s.material.dispose();fxs.splice(i,1)}}
@@ -462,21 +509,25 @@ addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 
 
 // ---------- modelos 3D de Tripo (solo en ordenador) ----------
+const CAPH=+(QS.get('caph')||3.1),CAPX=+(QS.get('capx')||-6.3),CAPY=+(QS.get('capy')||1.5),SHIPY=+(QS.get('shipy')||-1.2),EYEX=+(QS.get('eyex')||-6.6),EYEY=+(QS.get('eyey')||3.4),EYEZ=+(QS.get('eyez')||0),OWNS=+(QS.get('owns')||16);
 if(!LOW&&THREE.GLTFLoader&&!QS.has("noglb")){const GL=new THREE.GLTFLoader();const IMAP={selva:"isla-bosque",lino:"isla-lona",hierro:"isla-hierro",ron:"isla-ron",perlas:"isla-perlas"};
  const HGT={"isla-bosque":.77,"isla-lona":.46,"isla-hierro":.79,"isla-ron":.5,"isla-perlas":.7};const SINK={"isla-ron":.18,"isla-perlas":.28};
  const cache={};const get=(n,cb)=>{if(!cache[n])cache[n]=new Promise(res=>GL.load("modelos/"+n+".glb",g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material&&o.material.map)o.material.map.anisotropy=4}});res(g.scene)},undefined,()=>res(null)));cache[n].then(cb)};
- get("barco-galeon",m=>{if(!m)return;SHIPS.forEach((s,i)=>{if(i===myIdx)return;
-  s.children.forEach(c=>{if(!(c.isPointLight||c.isSprite||(c.material&&c.material.isMeshBasicMaterial)))c.visible=false});
-  const c=m.clone();c.scale.setScalar(16);c.rotation.y=Math.PI/2;c.position.y=-1.7;s.add(c);
+ get("barco-galeon",m=>{if(!m)return;SHIPS.forEach((s,i)=>{
+  s.children.forEach(c=>{if(c===eye)return;if(!(c.isPointLight||c.isSprite))c.visible=false});
+  const c=m.clone();const own=i===myIdx;c.scale.setScalar(own?OWNS:16);c.rotation.y=Math.PI/2;c.position.y=own?SHIPY*OWNS/16:SHIPY;s.add(c);
+  if(i===myIdx){s.children.forEach(o=>{if(o.isPointLight||o.isSprite||(o.material&&o.material.isMeshBasicMaterial))o.position.set(-7.4,3.6,0)});
+   get(CAPS[GS.players[i].cap||0].n.toLowerCase(),cm=>{if(!cm)return;const cp=cm.clone();cp.scale.setScalar(CAPH);cp.position.set(CAPX,CAPY,0);cp.rotation.y=Math.PI/2;s.add(cp);s.userData.cap=cp});return}
   const fl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5,6,2),std(PCOL[i],{side:THREE.DoubleSide,emissive:C(PCOL[i]),emissiveIntensity:.25}));fl.position.set(-1,13.2,0);s.add(fl);
-  anim.push(t=>{const fp=fl.geometry.attributes.position;for(let k=0;k<fp.count;k++){const xx=fp.getX(k)+1.3;fp.setZ(k,Math.sin(t*6-xx*3+i)*.15*xx)}fp.needsUpdate=true})})});
- ISL.forEach(o=>{if(o.home!==undefined)return;const name=IMAP[o.t];get(name,m=>{if(!m)return;const G=islandMeshes[key(o.c)];const g=G.children[0];const R=g.userData.R;
+  anim.push(t=>{const fp=fl.geometry.attributes.position;for(let k=0;k<fp.count;k++){const xx=fp.getX(k)+1.3;fp.setZ(k,Math.sin(t*6-xx*3+i)*.15*xx)}fp.needsUpdate=true});
+   get(CAPS[GS.players[i].cap||0].n.toLowerCase(),cm=>{if(!cm)return;const cp=cm.clone();cp.scale.setScalar(CAPH);cp.position.set(CAPX,CAPY,0);cp.rotation.y=Math.PI/2;s.add(cp);s.userData.cap=cp})})});
+ ISL.forEach(o=>{const name=o.home!==undefined?"isla-ron":IMAP[o.t];get(name,m=>{if(!m)return;const G=islandMeshes[key(o.c)];const g=G.children[0];const R=g.userData.R;
   const c=m.clone();const sc=2.6*R/.98;c.scale.setScalar(sc);c.position.y=-(SINK[name]||.04)*HGT[name]*sc;G.add(c);g.visible=false})})}
 
 // ---------- arranque ----------
 {const c=cellOf(me().cell);yawT=yaw=Math.atan2(-(VOL.z-c.z),VOL.x-c.x)-myShip.userData.heading;pitchT=pitch=.02}
 snapShips();renderOrders();requestAnimationFrame(frame);
-rcard("ÓRDENES SECRETAS","Ronda "+GS.round);
-setTimeout(()=>note(`Eres ${me().name}, capitán del barco ${["rojo","azul","dorado","morado","verde","naranja"][myIdx]}. Al fondo, el humo del volcán: allí está el tesoro. Abre el mapa (M) para trazar tu ruta y confirma tus órdenes.`,12),1200);
+if(introK>=1)introDone();
+if(0)setTimeout(()=>note(`Eres ${me().name}: ${CAPDESC[me().cap||0]}. Al fondo, el humo del volcán: allí está el tesoro. Abre el mapa (M) para trazar tu ruta y confirma tus órdenes.`,12),1200);
 window.restartWorld=()=>location.reload();
 if(QS.has("shot"))window.__G=()=>({GS,myIdx,seen:seen.size});
