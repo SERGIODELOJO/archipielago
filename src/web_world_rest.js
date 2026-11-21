@@ -84,7 +84,7 @@ addEventListener("pointermove",e=>{if(!drag)return;const f=spy?.0008:.004;yawT=d
 addEventListener("pointerup",()=>drag=null);
 
 // ---------- órdenes ----------
-let route=[],bet=0,prepared=null;const maxRoute=()=>prepared&&prepared.id==="viento-a-favor"?5:3;
+let route=[],bet=0,prepared=null;const maxRoute=()=>(GS.galerna?2:3)+(prepared&&prepared.id==="viento-a-favor"?2:0);
 function renderOrders(){const p=me(),locked=GS.phase!=="orders"||p.ready;
  $("oRoute").textContent=route.length?`Ruta: ${route.length} casilla${route.length>1?"s":""}`:"Sin ruta: te quedas quieto";
  $("oCard").textContent=prepared?"Carta: "+CBY[prepared.id].n+(prepared.target!=null?" → "+GS.players[prepared.target].name:""):"";

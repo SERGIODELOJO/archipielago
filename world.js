@@ -252,7 +252,7 @@ addEventListener("pointermove",e=>{if(!drag)return;const f=spy?.0008:.004;yawT=d
 addEventListener("pointerup",()=>drag=null);
 
 // ---------- órdenes ----------
-let route=[],bet=0,prepared=null;const maxRoute=()=>prepared&&prepared.id==="viento-a-favor"?5:3;
+let route=[],bet=0,prepared=null;const maxRoute=()=>(GS.galerna?2:3)+(prepared&&prepared.id==="viento-a-favor"?2:0);
 function renderOrders(){const p=me(),locked=GS.phase!=="orders"||p.ready;
  $("oRoute").textContent=route.length?`Ruta: ${route.length} casilla${route.length>1?"s":""}`:"Sin ruta: te quedas quieto";
  $("oCard").textContent=prepared?"Carta: "+CBY[prepared.id].n+(prepared.target!=null?" → "+GS.players[prepared.target].name:""):"";
@@ -324,7 +324,7 @@ if(Net.isHost){const b=document.createElement("button");b.id="bForce";b.textCont
 function hostResolve(){const G=H.G;if(G.phase!=="orders")return;G.phase="resolving";const P=G.players,ev=[];const E=(to,o)=>ev.push(Object.assign({to},o));
  const draw=()=>{if(!G.deck.length){G.deck=shuffle(G.discard||[]);G.discard=[]}return G.deck.pop()};G.discard=G.discard||[];
  const O=P.map((p,i)=>{const o=(!p.gone&&H.orders[i])||{route:[],card:null,bet:0,faroles:p.faroles};return o});
- P.forEach((p,i)=>{p.fx=Object.assign({},p.fx&&p.fx.wet?{wet:p.fx.wet}:{});p.faroles=!!O[i].faroles;p.bet=Math.max(0,Math.min(p.rum,O[i].bet|0));p.maxR=3;p.stop=false});
+ P.forEach((p,i)=>{p.fx=Object.assign({},p.fx&&p.fx.wet?{wet:p.fx.wet}:{});p.faroles=!!O[i].faroles;p.bet=Math.max(0,Math.min(p.rum,O[i].bet|0));p.maxR=G.galerna?2:3;p.stop=false});G.galerna=0;
  // cartas
  const played=[];P.forEach((p,i)=>{const c=O[i].card;if(!c||!CBY[c.id]||CBY[c.id].t==="respuesta")return;const k=p.hand.indexOf(c.id);if(k<0)return;p.hand.splice(k,1);G.discard.push(c.id);played.push({i,id:c.id,t:c.target})});
  played.forEach(({i,id,t})=>{const p=P[i],c=CBY[id];
@@ -340,7 +340,7 @@ function hostResolve(){const G=H.G;if(G.phase!=="orders")return;G.phase="resolvi
    if(id==="polvora-mojada"){q.fx.wet=1;E(t,{k:"card",card:id,txt:"Alguien ha mojado tu pólvora: esta ronda luchas con 2 cañones menos."})}
    if(id==="sobornar-al-vigia"){p.hideFrom=p.hideFrom||{};p.hideFrom[t]=2;E(i,{k:"card",card:id,txt:`El vigía de ${q.name} mirará hacia otro lado durante 2 rondas: no podrá verte.`})}
    if(c.t==="sabotaje"&&!["mapa-robado"].includes(id))E(i,{k:"card",card:id,txt:`Tu «${c.n}» ha caído sobre ${q.name}. No sabrá que fuiste tú.`});return}
-  if(id==="viento-a-favor"){p.maxR=Math.max(p.maxR,5);E(i,{k:"card",card:id,txt:"El viento empuja tus velas: este turno llegas más lejos."})}
+  if(id==="viento-a-favor"){p.maxR+=2;E(i,{k:"card",card:id,txt:"El viento empuja tus velas: este turno llegas más lejos."})}
   if(id==="vigia-de-aguila"){p.fx.vista=1;E(i,{k:"card",card:id,txt:"Tu vigía no pierde detalle: esta ronda ves más lejos."})}
   if(id==="remiendo-rapido"){p.cannons++;E(i,{k:"card",card:id,txt:`Montas un cañón de bronce: ahora tienes ${p.cannons} cañones.`})}
   if(id==="contrabando"){p.rum+=2;E(i,{k:"card",card:id,txt:"Unos contrabandistas te dejan 2 barriles de ron."})}
@@ -376,7 +376,18 @@ function hostResolve(){const G=H.G;if(G.phase!=="orders")return;G.phase="resolvi
  // fin de ronda
  P.forEach(p=>{p.rum=Math.min(9,p.rum+1);Object.keys(p.hideFrom||{}).forEach(k=>{if(--p.hideFrom[k]<=0)delete p.hideFrom[k]});if(p.fx.wet&&--p.fx.wet<=0)delete p.fx.wet;p.ready=false;delete p.stop});
  const top=P.filter(p=>!p.gone).sort((a,b)=>b.fame-a.fame||b.rum-a.rum);if(top.length&&top[0].fame>=G.target){G.winner=top[0].i;G.phase="over"}
- else{G.round++;G.phase="orders";P.forEach(p=>{if(p.gone)return;if(p.hand.length<3){const d=draw();if(d){p.hand.push(d);E(p.i,{k:"drew",card:d})}}})}
+ else{// sucesos del mar que afectan a todos
+  if(G.round>=(QS.has("ev")?1:2)&&Math.random()<(QS.has("ev")?1:.33)){const live=P.filter(p=>!p.gone);const k=Math.floor(Math.random()*8);let n,txt;
+   if(k===4){const lead=live.slice().sort((a,b)=>b.fame-a.fame)[0];lead.fame=Math.max(0,lead.fame-1);lead.cell=lead.home.slice();n="El kraken despierta";txt=`Un kraken hambriento ataca al barco con más fama: ${lead.name} pierde 1 de fama y vuelve a puerto.`}
+   if(k===5){live.forEach(p=>p.rum=Math.max(0,p.rum-1));n="Tormenta";txt="Una tormenta barre el archipiélago: todos perdéis 1 barril de ron."}
+   if(k===6){live.forEach(p=>{if(p.hand.length){const j=Math.floor(Math.random()*p.hand.length);G.discard.push(p.hand.splice(j,1)[0])}});n="Motín general";txt="Las tripulaciones se amotinan: cada uno pierde una carta al azar."}
+   if(k===7){const v=live[Math.floor(Math.random()*live.length)];v.cell=v.home.slice();n="Remolino";txt=`Un remolino se traga el barco de ${v.name} y lo escupe en su puerto.`}
+   if(k===0){G.galerna=1;n="Galerna";txt="Se levanta una galerna: la próxima ronda nadie podrá navegar más de 2 casillas."}
+   if(k===1){live.forEach(p=>p.rum=Math.min(9,p.rum+1));n="Marea de ron";txt="La marea arrastra barriles de un barco hundido: todos ganáis 1 barril de ron."}
+   if(k===2){const hit=live.filter(p=>cdist(cellOf(p.cell),VOL)<=2);hit.forEach(p=>p.rum=Math.max(0,p.rum-1));n="Lluvia de ceniza";txt="El volcán escupe ceniza ardiente. "+(hit.length?hit.map(p=>p.name).join(", ")+" pierde"+(hit.length>1?"n":"")+" 1 barril por estar cerca.":"Esta vez nadie estaba lo bastante cerca.")}
+   if(k===3){live.forEach(p=>{if(p.hand.length<3){const d=draw();if(d)p.hand.push(d)}});n="Restos de un naufragio";txt="Flotan restos de un naufragio: todos los que tengan sitio en la mano roban una Carta de Fortuna."}
+   E(-1,{k:"sea",n,txt})}
+  G.round++;G.phase="orders";P.forEach(p=>{if(p.gone)return;if(p.hand.length<3){const d=draw();if(d){p.hand.push(d);E(p.i,{k:"drew",card:d})}}})}
  const sent=P.map(p=>!!p.sent);P.forEach(p=>delete p.sent);H.orders={};
  Net.toAll({t:"resolve",G,paths,sent,ev})}
 
@@ -405,8 +416,8 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
     setTimeout(()=>{note(e.txt,8);if(e.lost){const h=cellOf(GS.players[myIdx].home);fadeJump(myShip,cellOf(m.G.players[myIdx].home))}nx()},1800)}else nx()}});
  fns.push(nx=>{// barcos enviados a puerto vuelven allí
   m.sent.forEach((s,i)=>{if(s){const h=cellOf(m.G.players[i].home);fadeJump(SHIPS[i],h)}});setTimeout(nx,m.sent.some(Boolean)?900:10)});
- mine.filter(e=>["chest","treasure","erupt"].includes(e.k)).forEach(e=>fns.push(nx=>{sndHit(e.k);if(e.k==="erupt")eruptFx();if(e.k==="treasure")rcard("TESORO","+3 de fama");
-  const t=document.createElement("div");t.className="fc big";t.dataset.t=e.k==="chest"?"ventaja":e.k==="treasure"?"ventaja":"sabotaje";t.innerHTML=`<div class="art">${e.k==="erupt"?"🌋":e.k==="treasure"?"✦":"⚿"}</div><div class="bot"><div class="tp">${e.k==="chest"?"Cofre":e.k==="treasure"?"Tesoro":"Volcán"}</div><div class="nm">${e.k==="chest"?"Exploración":e.k==="treasure"?"El tesoro del volcán":"¡Erupción!"}</div><div class="tx">${e.txt}</div></div>`;
+ mine.filter(e=>["chest","treasure","erupt","sea"].includes(e.k)).forEach(e=>fns.push(nx=>{sndHit(e.k);if(e.k==="erupt")eruptFx();if(e.k==="treasure")rcard("TESORO","+3 de fama");
+  const t=document.createElement("div");t.className="fc big";t.dataset.t=e.k==="sea"?"sigilo":e.k==="chest"?"ventaja":e.k==="treasure"?"ventaja":"sabotaje";t.innerHTML=`<div class="art">${e.k==="sea"?"≋":e.k==="erupt"?"🌋":e.k==="treasure"?"✦":"⚿"}</div><div class="bot"><div class="tp">${e.k==="sea"?"Suceso del mar":e.k==="chest"?"Cofre":e.k==="treasure"?"Tesoro":"Volcán"}</div><div class="nm">${e.k==="sea"?e.n:e.k==="chest"?"Exploración":e.k==="treasure"?"El tesoro del volcán":"¡Erupción!"}</div><div class="tx">${e.txt}</div></div>`;
   t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)}));
  const pub=mine.filter(e=>e.k==="note");if(pub.length)fns.push(nx=>{note(pub.map(e=>e.txt).join(" "),9);setTimeout(nx,400)});
  fns.push(nx=>{GS=m.G;snapShips();sndTension(0);document.body.classList.remove("sailing");route=[];prepared=null;bet=0;
