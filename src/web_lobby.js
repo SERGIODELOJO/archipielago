@@ -48,6 +48,7 @@ const Net={isHost:false,myId:null,code:null,peer:null,conns:{},bc:null,hostConn:
 .lobby .pl div{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04)}
 .lobby .dot{width:14px;height:14px;border-radius:50%;flex:none}
 .lobby .err{color:#ff9b7a;min-height:1.2em}
+.lobby .lens button{font-size:15px;padding:9px 10px}.lobby .lens button.sel{background:rgba(224,180,90,.4);border-color:#e0b45a}
 .lobby .in.wide{width:min(760px,100%)}
 .lobby .caps{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 @media (max-width:640px){.lobby .caps{grid-template-columns:repeat(3,1fr)}}
@@ -75,7 +76,7 @@ const lob=document.createElement("div");lob.className="lobby";lob.innerHTML=`<di
 <li>El <b>tesoro del volcán</b> da +3 de fama. Sigue el humo. Cuidado: puede entrar en erupción.</li>
 <li>Con los faroles apagados os ven peor. El catalejo (C) ve más lejos entre la niebla.</li>
 <li>Las <b>Cartas de Fortuna</b> ayudan o fastidian a otros. ¡Sabotaje descubierto! te protege sola.</li>
-<li>Gana el primero en llegar a la fama que marca arriba (10 con 3 o 4 piratas).</li></ul></details></div>`;
+<li>Gana el primero en llegar a la fama que marca arriba. El anfitrión elige la duración: corta, normal o larga.</li></ul></details></div>`;
 document.body.appendChild(lob);
 try{$("lName").value=localStorage.getItem("archi-name")||""}catch(e){}
 {const c=QS.get("sala");if(c)$("lCode").value=c.toUpperCase()}
@@ -92,12 +93,12 @@ function renderPlayers(list){LP=list;const el=$("lPl");if(el)el.innerHTML=list.m
  g.querySelectorAll("button.cap").forEach(b=>b.onclick=()=>Net.toHost({t:"cap",c:+b.dataset.k}))}
 const CAPDESC=["Capitana Brasa","Bruno el Forjado","Nadia la Inventora","Viejo Salitre","Lupe la Elegante","Kai el Grumete"];
 function renderHostLobby(){const url=location.origin+location.pathname+"?sala="+Net.code+(LOCAL?"&local":"");
- lobbyWait(`<h1>Archipiélago</h1><div class="sub">Pasa este código a tus amigos</div><div class="code">${Net.code}</div><div class="small">o este enlace: <span style="user-select:all;word-break:break-all">${esc(url)}</span></div><div class="sub" style="margin:4px 0 -4px">Elige tu capitán</div><div class="caps" id="lCaps"></div><button class="pri" id="lStart">Zarpar</button><div class="small" id="lHint"></div>`);$("lin").classList.add("wide");
+ lobbyWait(`<h1>Archipiélago</h1><div class="sub">Pasa este código a tus amigos</div><div class="code">${Net.code}</div><div class="small">o este enlace: <span style="user-select:all;word-break:break-all">${esc(url)}</span></div><div class="sub" style="margin:4px 0 -4px">Elige tu capitán</div><div class="caps" id="lCaps"></div><div class="row lens"><button data-l="0">Corta · ~25 min</button><button data-l="1">Normal · ~45 min</button><button data-l="2">Larga · ~1 h 15</button></div><button class="pri" id="lStart">Zarpar</button><div class="small" id="lHint"></div>`);$("lin").classList.add("wide");
  renderPlayers(H.players);$("lStart").disabled=H.players.length<2&&!QS.has("solo");$("lHint").textContent=H.players.length<2?"Hacen falta al menos 2 piratas.":H.players.length+" piratas. El mapa se ajusta a vosotros.";
- $("lStart").onclick=()=>hostStart()}
+ $("lStart").onclick=()=>hostStart();document.querySelectorAll(".lens button").forEach(b=>{b.classList.toggle("sel",+b.dataset.l===H.len);b.onclick=()=>{H.len=+b.dataset.l;renderHostLobby()}})}
 
 // ---------- lógica del anfitrión ----------
-const H={players:[],orders:{},G:null};
+const H={players:[],orders:{},G:null,len:1};
 function hostRecv(from,m){
  if(m.t==="join"){if(H.G){const nm=String(m.name).slice(0,14).toLowerCase();const p=H.G.players.find(p=>p.gone&&p.name.toLowerCase()===nm)||H.G.players.find(p=>p.name.toLowerCase()===nm);
    if(p){p.id=from;p.gone=false;p.ready=false;delete H.orders[p.i];Net.toOne(from,{t:"start",G:H.G});Net.toAll({t:"ready",ready:H.G.players.map(p=>p.ready),gone:H.G.players.map(p=>p.gone)});banner(p.name+" ha vuelto a la partida.")}
@@ -109,7 +110,7 @@ function hostLeft(id){if(!H.G){H.players=H.players.filter(p=>p.id!==id);Net.toAl
  const p=H.G.players.find(p=>p.id===id);if(p){p.gone=true;p.ready=true;Net.toAll({t:"ready",ready:H.G.players.map(p=>p.ready),gone:H.G.players.map(p=>p.gone)});banner(p.name+" se ha desconectado. Si vuelve a entrar con el mismo nombre, recupera su barco.");hostMaybeResolve()}}
 function hostMaybeResolve(){if(H.G.players.every(p=>p.ready||p.gone))setTimeout(()=>{if(H.G.phase==="orders")hostResolve()},400)}
 function hostStart(){if(H.G)return;const np=H.players.length;const deck=[];CARD_LIST.forEach(c=>{for(let i=0;i<c[3];i++)deck.push(c[0])});shuffle(deck);
- H.G={seed:1000+Math.floor(Math.random()*90000),np,round:1,phase:"orders",target:np<=2?8:np<=4?10:12,treasures:Math.max(1,np-1),
+ H.G={seed:1000+Math.floor(Math.random()*90000),np,round:1,phase:"orders",target:[9,14,20][H.len]+(np<=2?-2:np>=5?2:0),treasures:Math.max(1,np-1),
   players:H.players.map((p,i)=>({id:p.id,name:p.name,i,cap:p.cap,fame:0,rum:3,cannons:2,hand:[deck.pop(),deck.pop(),deck.pop()].slice(0,3),cell:null,home:null,ready:false,looted:[],hideFrom:{},got:false,faroles:false,gone:false})),deck,winner:-1};
  H.orders={};Net.toAll({t:"start",G:H.G})}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}

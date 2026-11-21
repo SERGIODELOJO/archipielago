@@ -134,7 +134,7 @@ function fadeJump(ship,c){ship.userData.from=null;ship.userData.pos.set(c.x,0,c.
 // ---------- cámara en tercera persona, detrás del capitán ----------
 scene.add(camera);const camT=new THREE.Vector3(),camL=new THREE.Vector3();let introK=QS.has("nointro")?1:0;const CAMD=+(QS.get("camd")||6.5),CAMH=+(QS.get("camh")||2.7),CAMEL=+(QS.get("camel")||.3),CAMS=+(QS.get("cams")||2.2);
 function thirdPerson(dt){if(introK<1){introK=Math.min(1,introK+dt/7);if(introK>=1)introDone()}const e=1-Math.pow(1-introK,3);
- myShip.updateMatrixWorld();camT.set(CAPX,(deckY!==null?deckY:CAPY)+CAMH,0);myShip.localToWorld(camT);
+ myShip.updateMatrixWorld();if(deckLow!==null){CLIPL[1].constant=deckLow+.35;CLIP.forEach((p,k)=>p.copy(CLIPL[k]).applyMatrix4(myShip.matrixWorld))}camT.set(CAPX,(deckLow!==null?deckLow:CAPY)+CAMH,0);myShip.localToWorld(camT);
  const az=myShip.userData.heading+yaw+(1-e)*2.4;const el=THREE.MathUtils.lerp(1.05,Math.max(.06,Math.min(1.35,CAMEL-pitch*.9)),e);const D=THREE.MathUtils.lerp(260,CAMD+Math.abs(Math.sin(yaw))*12+(1-Math.cos(yaw))*3,e);const sx=Math.sin(az)*CAMS*e*Math.cos(yaw),sz=Math.cos(az)*CAMS*e*Math.cos(yaw);
  camera.position.set(camT.x-Math.cos(az)*Math.cos(el)*D+sx,camT.y+Math.sin(el)*D,camT.z+Math.sin(az)*Math.cos(el)*D+sz);if(camera.position.y<1.4)camera.position.y=1.4;
  const ahead=spy?80:8;camL.set(camT.x+Math.cos(az)*ahead+sx,camT.y+(spy?0:.4)-(1-e)*2,camT.z-Math.sin(az)*ahead+sz);camera.lookAt(camL)}
@@ -209,17 +209,19 @@ addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 
 
 // ---------- modelos 3D de Tripo (solo en ordenador) ----------
-let deckY=null;const CAPH=+(QS.get('caph')||3.1),CAPX=+(QS.get('capx')||-7),CAPY=+(QS.get('capy')||1.5),SHIPY=+(QS.get('shipy')||-1.2),EYEX=+(QS.get('eyex')||-6.6),EYEY=+(QS.get('eyey')||3.4),EYEZ=+(QS.get('eyez')||0),OWNS=+(QS.get('owns')||16);
+let deckY=null,deckLow=null;const CLIPL=[new THREE.Plane(new THREE.Vector3(1,0,0),5.6),new THREE.Plane(new THREE.Vector3(0,-1,0),0)],CLIP=[new THREE.Plane(),new THREE.Plane()];
+const CAPH=+(QS.get('caph')||3.1),CAPX=+(QS.get('capx')||-7),CAPY=+(QS.get('capy')||1.5),SHIPY=+(QS.get('shipy')||-1.2),EYEX=+(QS.get('eyex')||-6.6),EYEY=+(QS.get('eyey')||3.4),EYEZ=+(QS.get('eyez')||0),OWNS=+(QS.get('owns')||16);
 if(!LOW&&THREE.GLTFLoader&&!QS.has("noglb")){const GL=new THREE.GLTFLoader();const IMAP={selva:"isla-bosque",lino:"isla-lona",hierro:"isla-hierro",ron:"isla-ron",perlas:"isla-perlas"};
  const HGT={"isla-bosque":.77,"isla-lona":.46,"isla-hierro":.79,"isla-ron":.5,"isla-perlas":.7};const SINK={"isla-ron":.18,"isla-perlas":.28};
  const cache={};const get=(n,cb)=>{if(!cache[n])cache[n]=new Promise(res=>GL.load("modelos/"+n+".glb",g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material&&o.material.map)o.material.map.anisotropy=4}});res(g.scene)},undefined,()=>res(null)));cache[n].then(cb)};
  const deckAt=m=>{if(deckY!==null)return deckY;const g=new THREE.Group();const c=m.clone();c.scale.setScalar(16);c.rotation.y=Math.PI/2;c.position.y=SHIPY;g.add(c);g.updateMatrixWorld(true);
-  const rc=new THREE.Raycaster(new THREE.Vector3(CAPX,40,0),new THREE.Vector3(0,-1,0));const hs=rc.intersectObject(g,true).map(h=>h.point.y).filter(y=>y<CAPY+3.5);deckY=hs.length?Math.max(...hs):CAPY;return deckY};
+  const rc=new THREE.Raycaster(new THREE.Vector3(CAPX,40,0),new THREE.Vector3(0,-1,0));const hs=rc.intersectObject(g,true).map(h=>h.point.y).filter(y=>y<CAPY+3.5);deckY=hs.length?Math.max(...hs):CAPY;const lo=hs.filter(y=>y<deckY-.6);deckLow=lo.length?Math.max(...lo):deckY;return deckY};
  get("barco-galeon",m=>{if(!m)return;SHIPS.forEach((s,i)=>{
   s.children.forEach(c=>{if(c===eye)return;if(!(c.isPointLight||c.isSprite))c.visible=false});
   const c=m.clone();const own=i===myIdx;c.scale.setScalar(own?OWNS:16);c.rotation.y=Math.PI/2;c.position.y=own?SHIPY*OWNS/16:SHIPY;s.add(c);
   if(i===myIdx){s.children.forEach(o=>{if(o.isPointLight||o.isSprite||(o.material&&o.material.isMeshBasicMaterial))o.position.set(-7.4,3.6,0)});
-   get(CAPS[GS.players[i].cap||0].n.toLowerCase(),cm=>{if(!cm)return;const cp=cm.clone();cp.scale.setScalar(CAPH);cp.position.set(CAPX,deckAt(m)+.03,0);cp.rotation.y=Math.PI/2;s.add(cp);s.userData.cap=cp});return}
+   deckAt(m);renderer.localClippingEnabled=true;c.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.clippingPlanes=CLIP;o.material.clipIntersection=true;o.material.clipShadows=true}});
+   get(CAPS[GS.players[i].cap||0].n.toLowerCase(),cm=>{if(!cm)return;const cp=cm.clone();cp.scale.setScalar(CAPH);cp.position.set(CAPX,deckLow+.03,0);cp.rotation.y=Math.PI/2;s.add(cp);s.userData.cap=cp});return}
   const fl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5,6,2),std(PCOL[i],{side:THREE.DoubleSide,emissive:C(PCOL[i]),emissiveIntensity:.25}));fl.position.set(-1,13.2,0);s.add(fl);
   anim.push(t=>{const fp=fl.geometry.attributes.position;for(let k=0;k<fp.count;k++){const xx=fp.getX(k)+1.3;fp.setZ(k,Math.sin(t*6-xx*3+i)*.15*xx)}fp.needsUpdate=true});
    get(CAPS[GS.players[i].cap||0].n.toLowerCase(),cm=>{if(!cm)return;const cp=cm.clone();cp.scale.setScalar(CAPH);cp.position.set(CAPX,deckAt(m)+.03,0);cp.rotation.y=Math.PI/2;s.add(cp);s.userData.cap=cp})})});
