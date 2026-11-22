@@ -79,7 +79,7 @@ async function fxBattle0(e){const others=(e.with||[]).filter(j=>j!==myIdx);const
  await fwait(700);
  const won=!e.lost&&!e.txt.startsWith("Abordaje igualado"),tie=e.txt.startsWith("Abordaje igualado");
  const deck=(deckLow!==null?deckLow:CAPY)+.2;const plank=new THREE.Mesh(new THREE.BoxGeometry(1.4,.25,7.5),std("#6b4a2a"));plank.position.copy(mid).setY(deck+.6);plank.rotation.y=h;scene.add(plank);
- const caps=await Promise.all([GS.players[myIdx].cap,GS.players[j].cap].map(c=>new Promise(r=>animCap(c,r))));
+ const FF=(e.ff||[]).includes(j);const caps=await Promise.all([0,1].map(k=>new Promise(r=>{if(k&&FF)animCrew(0).then(r,()=>r(null));else animCap(k?GS.players[j].cap:GS.players[myIdx].cap,r)})));
  const statics=[ua.cap,ub.cap].filter(Boolean);
  if(caps[0]&&caps[1]){statics.forEach(o=>o.visible=false);
   const crew=await Promise.all([0,1,2,3].map(n=>animCrew(n)));

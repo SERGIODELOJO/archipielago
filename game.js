@@ -267,7 +267,7 @@ function hostRecv(from,m){
  if(m.t==="offerAns"&&H.G){const P=H.G.players,o=(H.offers||{})[m.id];if(!o||P[o.to].id!==from)return;delete H.offers[m.id];const A=P[o.from],B=P[o.to];let ok=!!m.ok,why="";if(ok&&H.G.phase!=="orders"){ok=false;why="La ronda ya se estaba resolviendo."}
   if(ok&&o.kind==="trade"){if(!canPay(A,o.give)||!canPay(B,o.get)){ok=false;why="A alguien ya no le llegaba el material."}else{Object.entries(o.give).forEach(([k,n])=>{addStock(A,k,-n);addStock(B,k,n)});Object.entries(o.get).forEach(([k,n])=>{addStock(B,k,-n);addStock(A,k,n)})}}
   if(ok&&o.kind==="pact"){H.G.pacts=(H.G.pacts||[]).filter(x=>!((x.a===o.from&&x.b===o.to)||(x.a===o.to&&x.b===o.from))).concat({a:o.from,b:o.to,until:H.G.round+2})}
-  if(ok){A.mer=(A.mer||0)+1;B.mer=(B.mer||0)+1;Net.toAll({t:"state",G:H.G})}[A,B].forEach(p=>Net.toOne(p.id,{t:"offerRes",o,ok,why}));return}
+  if(ok){const pk=H.G.round+"|"+Math.min(o.from,o.to)+"-"+Math.max(o.from,o.to)+"|"+o.kind;H.merPairs=H.merPairs||{};if(!H.merPairs[pk]){H.merPairs[pk]=1;A.mer=(A.mer||0)+1;B.mer=(B.mer||0)+1}Net.toAll({t:"state",G:H.G})}[A,B].forEach(p=>Net.toOne(p.id,{t:"offerRes",o,ok,why}));return}
  if(m.t==="duelBet"&&H.G){const i=H.G.players.findIndex(p=>p.id===from);if(i>=0&&typeof hostDuelBet==="function")hostDuelBet(i,m);return}
  if(m.t==="duelAns"&&H.G){const i=H.G.players.findIndex(p=>p.id===from);if(i>=0&&typeof hostDuelAns==="function")hostDuelAns(i,m);return}
  if(m.t==="place"&&H.G){const i=H.G.players.findIndex(p=>p.id===from);if(i>=0&&typeof hostPlace==="function")hostPlace(i,m);return}
