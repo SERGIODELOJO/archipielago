@@ -169,6 +169,7 @@ body.sailing .hand,body.sailing .prep{opacity:0;pointer-events:none}
 .hand .fc{margin-left:-26px}.hand .fc:first-child{margin-left:0}
 .hand .fc:nth-child(1){transform:rotate(-7deg) translateY(6px)}.hand .fc:nth-child(2){transform:rotate(0)}.hand .fc:nth-child(3){transform:rotate(7deg) translateY(6px)}
 .hand .fc:hover,.hand .fc:focus-visible{transform:translateY(-22px) rotate(0) scale(1.06);z-index:2;outline:none}
+.fc[data-t=legendaria]{--c:#f5c542;border-width:4px;box-shadow:0 0 22px rgba(245,197,66,.55),0 8px 24px rgba(0,0,0,.6)}.fc.leg::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,240,190,.35) 48%,transparent 60%);background-size:250% 100%;animation:legsh 3.2s linear infinite;pointer-events:none}@keyframes legsh{0%{background-position:130% 0}100%{background-position:-130% 0}}.legslot{display:flex;justify-content:center;margin:6px 0}.legslot .fc{width:150px}
 .fc[data-t=sabotaje]{--c:#a8322a}.fc[data-t=sigilo]{--c:#5a7a95}.fc[data-t=respuesta]{--c:#2f8f7a}
 .fc .art{position:absolute;inset:0 0 34%;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--c) 45%,#000),#0b0907 75%);display:flex;align-items:center;justify-content:center;font-family:"IM Fell English SC",Georgia,serif;font-size:56px;color:color-mix(in srgb,var(--c) 70%,#fff);overflow:hidden}
 .fc .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -323,7 +324,7 @@ $("oAct").onclick=openActs;$("actp").addEventListener("click",e=>{if(e.target.id
 function renderActs(){const p=me(),box=$("aBox");const B=(label,cost,a,why)=>{cost=costFor(p,cost,a.a);const ok=!why&&canAfford(cost);return `<button data-a='${JSON.stringify(a)}' ${ok?"":"disabled"} title="${why||(!canAfford(cost)?"No tienes material suficiente":"")}">${label}<small>${why||(a.a==="patrulla"?"gasta 1 escolta":costTxt(cost))}</small></button>`};
  let h=`<h3>Acciones de esta ronda</h3><div class="hint">Se hacen antes de zarpar, donde está anclado tu barco ahora. Después navegas con la ruta del mapa.</div>`;
  h+=`<div class="row hint">★ <b>${HAB[capOf(p)].n}</b>: ${HAB[capOf(p)].x} &nbsp; ${p.mis?`🗝 <b>Misión secreta: ${MIS[p.mis].n}</b>: ${MIS[p.mis].x}${p.misOk?" ✓ cumplida":" (+2 de fama)"}`:""}</div>`;
- if(GS.auction){const A=AUC[GS.auction.it];h+=`<h4>🔨 Subasta en la taberna: ${A.n}</h4><div class="hint">${A.x} Puja en secreto: gana quien más ron ponga y solo paga el ganador. Si empatáis, gana quien tenga menos fama.</div><div class="row"><button id="bidM">−</button><b>Tu puja: ${bid} ron</b><button id="bidP">+</button></div>`}
+ if(GS.auction){const A=AUC[GS.auction.it];h+=`<h4>🔨 Subasta en la taberna: ${A.n}</h4><div class="legslot" data-it="${GS.auction.it}"></div><div class="hint">${A.x} Puja en secreto: gana quien más ron ponga y solo paga el ganador. Si empatáis, gana quien tenga menos fama.</div><div class="row"><button id="bidM">−</button><b>Tu puja: ${bid} ron</b><button id="bidP">+</button></div>`}
  if(GS.council){h+=`<h4>🏛 Consejo pirata</h4><div class="hint">La ley ganadora manda hasta el próximo consejo. Tienes 1 voto y cada ron que pagues es 1 voto más.</div><div class="row">${GS.council.o.map((k,q)=>`<button data-vote="${q}" class="${vote===q?"on":""}">${LAWS[k].n}<small>${LAWS[k].x}</small></button>`).join("")}</div><div class="row"><span>Votos comprados</span><button id="vbM">−</button><b>${vbuy}</b><button id="vbP">+</button></div>`}
  if(GS.law)h+=`<div class="hint">📜 Ley vigente: <b>${LAWS[GS.law].n}</b>. ${LAWS[GS.law].x}</div>`;
  {const hs=GS.hostages||[];const mh=hs.filter(x=>x.of===myIdx),held=hs.filter(x=>x.by===myIdx);if(mh.length||held.length){h+=`<h4>⛓ Rehenes</h4><div class="row">`;mh.forEach(x=>h+=`<button data-ransom="${x.id}" ${p.rum>=3?"":"disabled"}>Pagar rescate a ${esc(GS.players[x.by].name)}<small>3 🍾 · al momento</small></button>`);held.forEach(x=>h+=`<button data-recruit="${x.id}" ${p.rum>=1&&(p.crew||0)<4?"":"disabled"}>Reclutar al rehén de ${esc(GS.players[x.of].name)}<small>1 🍾 · +1 tripulante</small></button>`);h+=`</div><div class="hint">Si en 2 rondas nadie paga el rescate, el rehén se une a quien lo tiene.</div>`}}
@@ -361,6 +362,7 @@ function renderActs(){const p=me(),box=$("aBox");const B=(label,cost,a,why)=>{co
  h+=`<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="pri" id="aDone">Listo</button></div>`;
  const st=box.scrollTop;box.innerHTML=h;box.scrollTop=st;
  box.querySelectorAll("button[data-vote]").forEach(b=>b.onclick=()=>{vote=+b.dataset.vote;renderActs()});
+ document.querySelectorAll(".legslot").forEach(sl=>{if(!sl.firstChild&&typeof legendEl==="function")sl.appendChild(legendEl(sl.dataset.it))});
  if($("bidP")){$("bidP").onclick=()=>{if(left("ron")>0)bid++;renderOrders();renderActs()};$("bidM").onclick=()=>{bid=Math.max(0,bid-1);renderOrders();renderActs()}}
  if($("vbP")){$("vbP").onclick=()=>{if(left("ron")>0)vbuy++;renderOrders();renderActs()};$("vbM").onclick=()=>{vbuy=Math.max(0,vbuy-1);renderOrders();renderActs()}}
  box.querySelectorAll("button[data-ransom]").forEach(b=>b.onclick=()=>{Net.toHost({t:"ransom",h:b.dataset.ransom});b.disabled=true});
@@ -466,6 +468,9 @@ const CBY={};CARD_LIST.forEach(([id,n,t,k,x])=>CBY[id]={id,n,t,k,x});
 const TLABEL={ventaja:"Ventaja",sabotaje:"Sabotaje",sigilo:"Sigilo",respuesta:"Respuesta"};
 function cardEl(id,big){const c=CBY[id];const e=document.createElement("div");e.className="fc"+(big?" big":"");e.dataset.t=c.t;e.tabIndex=0;
  e.innerHTML=(c.t==="respuesta"?"":`<div class="cost">${costTxt(CARDCOST(id,me()))}</div>`)+`<div class="art">${c.n.replace("¡","")[0]}<img alt="" src="cartas/arte/${c.id}.jpg" onerror="this.remove()"></div><div class="bot"><div class="tp">${TLABEL[c.t]}</div><div class="nm">${c.n}</div><div class="tx">${c.x}</div></div>`;return e}
+const LEGART={canon:"OIG2.9dJHDkyKU_1sUTxNDHVj",mapa:"OIG3.nxPd2fnlWVnmvUlI2Ng2",fantasma:"OIG1.gedbFYru5eAddTndSbKf",patente:"OIG2.jLZ9_V0DlsMVXxSgI1mL",baraja:"OIG2.eTW0wA269sOmc98_4XIZ",bodega:"OIG4.UrR2xZU0SCDhBwSqYmD8"};
+function legendEl(it,big){const A=AUC[it];const e=document.createElement("div");e.className="fc leg"+(big?" big":"");e.dataset.t="legendaria";
+ e.innerHTML=`<div class="art">★<img alt="" src="${LEGART[it]?`https://th.bing.com/th/id/${LEGART[it]}?w=400&pid=ImgGn`:`cartas/arte/leg-${it}.jpg`}" onerror="this.remove()"></div><div class="bot"><div class="tp">★ Legendaria · subasta</div><div class="nm">${A.n}</div><div class="tx">${A.x}</div></div>`;return e}
 const handEl=document.createElement("div");handEl.className="hand";document.body.appendChild(handEl);
 const cov=document.createElement("div");cov.className="cov";document.body.appendChild(cov);
 let covTimer=0;
@@ -694,6 +699,7 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
   t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)}));
  mine.filter(e=>e.k==="rumor").forEach(e=>rumors[e.who]={at:e.at,round:m.G.round});
  fns.push(nx=>{logRound(m,mine);showLog(false,()=>setTimeout(nx,200))});
+ fns.push(nx=>{if(m.G.auction&&m.G.phase!=="over"){const e=legendEl(m.G.auction.it,true);e.classList.add("flip");showCov([e],"🔨 Subasta en la taberna: una carta legendaria. Puja en secreto en Acciones.",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],9000)}else nx()});
  fns.push(nx=>{GS=m.G;snapShips();SHIPS.forEach((s,i)=>setShipModel(i));placeColonies();sndTension(0);document.body.classList.remove("sailing");route=[];prepared=null;bet=0;acts=[];bid=0;vote=-1;vbuy=0;armDeadline(GS.timer?GS.timer*60+60-(Date.now()-m.rt)/1000:0);
   if(GS.phase==="over"){gameOver();nx();return}
   rcard("ÓRDENES SECRETAS","Ronda "+GS.round);renderOrders();

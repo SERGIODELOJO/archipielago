@@ -5,6 +5,7 @@ body.sailing .hand,body.sailing .prep{opacity:0;pointer-events:none}
 .hand .fc{margin-left:-26px}.hand .fc:first-child{margin-left:0}
 .hand .fc:nth-child(1){transform:rotate(-7deg) translateY(6px)}.hand .fc:nth-child(2){transform:rotate(0)}.hand .fc:nth-child(3){transform:rotate(7deg) translateY(6px)}
 .hand .fc:hover,.hand .fc:focus-visible{transform:translateY(-22px) rotate(0) scale(1.06);z-index:2;outline:none}
+.fc[data-t=legendaria]{--c:#f5c542;border-width:4px;box-shadow:0 0 22px rgba(245,197,66,.55),0 8px 24px rgba(0,0,0,.6)}.fc.leg::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,240,190,.35) 48%,transparent 60%);background-size:250% 100%;animation:legsh 3.2s linear infinite;pointer-events:none}@keyframes legsh{0%{background-position:130% 0}100%{background-position:-130% 0}}.legslot{display:flex;justify-content:center;margin:6px 0}.legslot .fc{width:150px}
 .fc[data-t=sabotaje]{--c:#a8322a}.fc[data-t=sigilo]{--c:#5a7a95}.fc[data-t=respuesta]{--c:#2f8f7a}
 .fc .art{position:absolute;inset:0 0 34%;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--c) 45%,#000),#0b0907 75%);display:flex;align-items:center;justify-content:center;font-family:"IM Fell English SC",Georgia,serif;font-size:56px;color:color-mix(in srgb,var(--c) 70%,#fff);overflow:hidden}
 .fc .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}

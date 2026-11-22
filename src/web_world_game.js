@@ -1,5 +1,8 @@
 function cardEl(id,big){const c=CBY[id];const e=document.createElement("div");e.className="fc"+(big?" big":"");e.dataset.t=c.t;e.tabIndex=0;
  e.innerHTML=(c.t==="respuesta"?"":`<div class="cost">${costTxt(CARDCOST(id,me()))}</div>`)+`<div class="art">${c.n.replace("¡","")[0]}<img alt="" src="cartas/arte/${c.id}.jpg" onerror="this.remove()"></div><div class="bot"><div class="tp">${TLABEL[c.t]}</div><div class="nm">${c.n}</div><div class="tx">${c.x}</div></div>`;return e}
+const LEGART={canon:"OIG2.9dJHDkyKU_1sUTxNDHVj",mapa:"OIG3.nxPd2fnlWVnmvUlI2Ng2",fantasma:"OIG1.gedbFYru5eAddTndSbKf",patente:"OIG2.jLZ9_V0DlsMVXxSgI1mL",baraja:"OIG2.eTW0wA269sOmc98_4XIZ",bodega:"OIG4.UrR2xZU0SCDhBwSqYmD8"};
+function legendEl(it,big){const A=AUC[it];const e=document.createElement("div");e.className="fc leg"+(big?" big":"");e.dataset.t="legendaria";
+ e.innerHTML=`<div class="art">★<img alt="" src="${LEGART[it]?`https://th.bing.com/th/id/${LEGART[it]}?w=400&pid=ImgGn`:`cartas/arte/leg-${it}.jpg`}" onerror="this.remove()"></div><div class="bot"><div class="tp">★ Legendaria · subasta</div><div class="nm">${A.n}</div><div class="tx">${A.x}</div></div>`;return e}
 const handEl=document.createElement("div");handEl.className="hand";document.body.appendChild(handEl);
 const cov=document.createElement("div");cov.className="cov";document.body.appendChild(cov);
 let covTimer=0;
@@ -228,6 +231,7 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
   t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)}));
  mine.filter(e=>e.k==="rumor").forEach(e=>rumors[e.who]={at:e.at,round:m.G.round});
  fns.push(nx=>{logRound(m,mine);showLog(false,()=>setTimeout(nx,200))});
+ fns.push(nx=>{if(m.G.auction&&m.G.phase!=="over"){const e=legendEl(m.G.auction.it,true);e.classList.add("flip");showCov([e],"🔨 Subasta en la taberna: una carta legendaria. Puja en secreto en Acciones.",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],9000)}else nx()});
  fns.push(nx=>{GS=m.G;snapShips();SHIPS.forEach((s,i)=>setShipModel(i));placeColonies();sndTension(0);document.body.classList.remove("sailing");route=[];prepared=null;bet=0;acts=[];bid=0;vote=-1;vbuy=0;armDeadline(GS.timer?GS.timer*60+60-(Date.now()-m.rt)/1000:0);
   if(GS.phase==="over"){gameOver();nx();return}
   rcard("ÓRDENES SECRETAS","Ronda "+GS.round);renderOrders();
