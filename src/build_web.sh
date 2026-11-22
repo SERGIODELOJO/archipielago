@@ -6,7 +6,7 @@ mkdir -p $OUT/lib $OUT/tex
 cp $SP/t3/package/build/three.min.js $OUT/lib/
 for f in controls/OrbitControls.js objects/Water.js objects/Sky.js; do cp $SP/t3/package/examples/js/$f $OUT/lib/; done
 cp $SP/pj/package/dist/peerjs.min.js $SP/t3/package/examples/js/loaders/GLTFLoader.js $SP/t3/package/examples/js/utils/SkeletonUtils.js $OUT/lib/
-mkdir -p $OUT/modelos; cp /mnt/project-files/juegos/modelos/*.glb $OUT/modelos/; mkdir -p $OUT/cartas/png; cp /mnt/project-files/juegos/cartas/arte/*.png $OUT/cartas/png/ 2>/dev/null || true
+mkdir -p $OUT/musica; cp $SP/musica_web/*.mp3 $OUT/musica/; mkdir -p $OUT/modelos; cp /mnt/project-files/juegos/modelos/*.glb $OUT/modelos/; mkdir -p $OUT/cartas/png; cp /mnt/project-files/juegos/cartas/arte/*.png $OUT/cartas/png/ 2>/dev/null || true
 cp /mnt/project-files/juegos/tableros/tex/waternormals.jpg /mnt/project-files/juegos/tableros/tex/lavatile.jpg $OUT/tex/
 B=$(date +%s)
 cat > $OUT/index.html <<HTML
