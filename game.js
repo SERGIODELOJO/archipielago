@@ -290,7 +290,7 @@ function diceOrder(ids){const rolls={};const d6=()=>1+Math.floor(Math.random()*6
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const CARD_LIST=[["viento-a-favor","Viento a favor","ventaja",3,"Este turno navegas hasta 5 casillas."],
  ["vigia-de-aguila","Vigía de águila","ventaja",2,"Esta ronda ves todos los barcos a 4 casillas o menos."],
- ["remiendo-rapido","Cañón de bronce","ventaja",2,"Tu barco gana 1 cañón para siempre (máximo 6). Se retira de la partida al usarla."],
+ ["remiendo-rapido","Cañón de bronce","ventaja",2,"+1 cañón para siempre (máx. 6). Se retira al usarla."],
  ["contrabando","Contrabando","ventaja",2,"Ganas 3 barriles de ron."],
  ["botin-escondido","Botín escondido","ventaja",2,"Desentierras 3 materiales al azar."],
  ["carta-del-cartografo","Carta del cartógrafo","ventaja",1,"Descubres en tu mapa una zona camino del volcán."],
@@ -343,7 +343,7 @@ const REPN={pirata:"☠ Pirata temido",mercader:"⚖ Mercader honrado"};
 const tradeR=(p,home,give,mk)=>{let r=(home||FL(p).includes("mercante")||capOf(p)===3||repOf(p)==="mercader")?2:3;if(repOf(p)==="pirata")r++;if(mk&&give){if(give===mk.want)r--;if(give===mk.glut)r++}return Math.max(1,r)};
 const AUC={canon:{n:"Cañón legendario",x:"+2 cañones para siempre (máximo 6).",f:p=>{p.cannons=Math.min(6,p.cannons+2)}},
  mapa:{n:"Mapa del volcán",x:"Se dibuja en tu mapa dónde está el volcán.",f:(p,E)=>E(p.i,{k:"card",card:"mapa",txt:"El mapa de la subasta revela el escondite del volcán.",reveal:[[[VOL.q,VOL.r],1]]})},
- fantasma:{n:"Bergantín fantasma",x:"Un bergantín se une gratis a tu flota (+3 de fuerza).",f:p=>{if(FL(p).length<FLMAX)p.fl=FL(p).concat(["bergantin"]);else p.cannons+=2}},
+ fantasma:{n:"Bergantín fantasma",x:"Un bergantín se une gratis a tu flota (+3 de fuerza).",f:p=>{if(FL(p).length<FLMAX)p.fl=FL(p).concat(["bergantin"]);else p.cannons=Math.min(6,p.cannons+2)}},
  patente:{n:"Patente de corso",x:"+1 de fama para siempre.",f:p=>{p.bonus=(p.bonus||0)+1}},
  bodega:{n:"Bodega repleta",x:"+2 de madera, lona, hierro y perlas.",f:p=>{["madera","lona","hierro","perlas"].forEach(m=>addStock(p,m,2))}},
  baraja:{n:"Baraja marcada",x:"Robas 2 Cartas de Fortuna (si te caben en la mano).",f:(p,E,G)=>{for(let k=0;k<2;k++){if(p.hand.length>=HMAX(p))break;if(!G.deck.length){G.deck=shuffle(G.discard||[]);G.discard=[]}const d=G.deck.pop();if(d){p.hand.push(d);E(p.i,{k:"drew",card:d})}}}}};
