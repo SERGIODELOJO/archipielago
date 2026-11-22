@@ -6,7 +6,7 @@ seed=GS.seed;
 const NP=GS.np;
 const HS=22, K=HS/3.2;
 const wx=(q,r)=>HS*Math.sqrt(3)*(q+r/2), wz=(q,r)=>HS*1.5*r;
-const RAD={1:4,2:5,3:6,4:6,5:7,6:7}[NP];
+const RAD={1:4,2:4,3:5,4:5,5:6,6:6}[NP];
 const cdist=(a,b)=>(Math.abs(a.q-b.q)+Math.abs(a.r-b.r)+Math.abs((a.q+a.r)-(b.q+b.r)))/2;
 const key=c=>c.q+","+c.r;
 const CELLS=[],CM={};for(let q=-RAD;q<=RAD;q++)for(let r=-RAD;r<=RAD;r++){if(Math.abs(q+r)<=RAD){const c={q,r,x:wx(q,r),z:wz(q,r),d:cdist({q,r},{q:0,r:0})};CELLS.push(c);CM[key(c)]=c}}
@@ -27,3 +27,4 @@ const START=HOMES.map(h=>neighbors(h).filter(sailable).sort((a,b)=>a.d-b.d)[0]);
 if(Net.isHost&&H.G&&!H.G.players[0].cell){H.G.players.forEach((p,i)=>{p.cell=[START[i].q,START[i].r];p.home=[START[i].q,START[i].r]})}
 GS.players.forEach((p,i)=>{if(!p.cell){p.cell=[START[i].q,START[i].r];p.home=[START[i].q,START[i].r]}});
 const cellOf=a=>CM[a[0]+","+a[1]];
+{const mk=G=>{if(G&&!G.terr){G.terr={};G.fort={};G.bld=G.bld||{};ISL.forEach(o=>{if(o.home===undefined){G.terr[key(o.c)]=Array(slotsOf(o)).fill(-1);G.fort[key(o.c)]=Array(slotsOf(o)).fill(0)}})}};if(Net.isHost&&H.G)mk(H.G);mk(GS)}

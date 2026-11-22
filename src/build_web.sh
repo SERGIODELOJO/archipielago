@@ -5,7 +5,7 @@ OUT=${1:-/mnt/project-files/juegos/web}
 mkdir -p $OUT/lib $OUT/tex
 cp $SP/t3/package/build/three.min.js $OUT/lib/
 for f in controls/OrbitControls.js objects/Water.js objects/Sky.js; do cp $SP/t3/package/examples/js/$f $OUT/lib/; done
-cp $SP/pj/package/dist/peerjs.min.js $SP/t3/package/examples/js/loaders/GLTFLoader.js $OUT/lib/
+cp $SP/pj/package/dist/peerjs.min.js $SP/t3/package/examples/js/loaders/GLTFLoader.js $SP/t3/package/examples/js/utils/SkeletonUtils.js $OUT/lib/
 mkdir -p $OUT/modelos; cp /mnt/project-files/juegos/modelos/*.glb $OUT/modelos/; mkdir -p $OUT/cartas/png; cp /mnt/project-files/juegos/cartas/arte/*.png $OUT/cartas/png/ 2>/dev/null || true
 cp /mnt/project-files/juegos/tableros/tex/waternormals.jpg /mnt/project-files/juegos/tableros/tex/lavatile.jpg $OUT/tex/
 B=$(date +%s)
@@ -27,12 +27,13 @@ canvas{display:block;touch-action:none}
 <script src="lib/Water.js"></script>
 <script src="lib/Sky.js"></script>
 <script src="lib/GLTFLoader.js"></script>
+<script src="lib/SkeletonUtils.js"></script>
 <script src="lib/peerjs.min.js"></script>
 <script src="game.js?v=$B"></script>
 </body></html>
 HTML
 cat $SP/helpers.js $SP/types.js $SP/web_lobby.js > $OUT/game.js
-cat $SP/web_world_gen.js $SP/g_scene.js $SP/g_cardcss.js $SP/web_world_rest.js $SP/web_world_game.js > $OUT/world.js
+cat $SP/web_world_gen.js $SP/g_scene.js $SP/g_cardcss.js $SP/web_world_rest.js $SP/web_world_game.js $SP/web_world_fx.js > $OUT/world.js
 python3 $SP/cards_img.py $OUT >/dev/null
 mkdir -p $OUT/retratos; cp $SP/retratos/*.jpg $OUT/retratos/
 touch $OUT/.nojekyll

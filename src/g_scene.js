@@ -18,17 +18,36 @@ ISL.forEach(o=>{const G=new THREE.Group();const g=island({x:0,z:0,t:o.t,s:o.s,q:
  G.scale.setScalar(K);G.position.set(o.c.x,0,o.c.z);G.rotation.y=rnd()*6.28;scene.add(G);islandMeshes[key(o.c)]=G});
 
 // ---------- volcán con columna de humo visible desde lejos ----------
-(function(){const vg=new THREE.Group();const N=60,M=96,pos=[],col=[],idx=[];const Rv=3.6,PK=6.5;
- const ash=C("#2a2220"),rk=C("#4a3a33"),grn=C("#3c5a2c"),snd=C("#a98d6a"),hot=C("#8a2208"),tc=new THREE.Color();
- for(let i=0;i<=N;i++)for(let j=0;j<M;j++){const k=i/N,th=j/M*6.283;const co=1+.16*(fbm(Math.cos(th)*1.5+3,Math.sin(th)*1.5)-.5)*2;const r=k*Rv*co;const X=Math.cos(th)*r,Z=Math.sin(th)*r;
-  let h=k<.16?PK-1.8*(1-k/.16)*(1-k/.16):k<.92?PK*Math.pow(1-(k-.16)/.76,1.35)+.15:.15-.6*(k-.92)/.08;h+=.4*(fbm(X*.9,Z*.9)-.5)*(1-k);
-  const gul=Math.pow(Math.max(0,Math.cos(th*5+fbm(X*.5,Z*.5)*3)),18);h-=gul*.25*(1-k);
-  pos.push(X,h,Z);if(h<.25)tc.copy(snd);else if(k>.7)tc.copy(grn).lerp(rk,fbm(X,Z));else tc.copy(rk).lerp(ash,(1-k));if(k<.6&&gul>.5)tc.lerp(hot,.9*(gul-.5)*2*(1-k/.6));if(k<.17)tc.copy(hot).lerp(ash,.4);col.push(tc.r,tc.g,tc.b)}
+(function(){const vg=new THREE.Group();window.VOLG=vg;const N=110,M=200,pos=[],col=[],glw=[],idx=[];const Rv=4.9,PK=11.5;
+ const ash=C("#221c1a"),rk=C("#3e322d"),rk2=C("#5a4a40"),grn=C("#34502a"),snd=C("#a98d6a"),hot=C("#8a2208"),tc=new THREE.Color();
+ const prof=k=>k<.1?PK-2.6*(1-k/.1)*(1-k/.1):k<.62?PK*Math.pow(1-(k-.1)/.52,1.25)*.82+PK*.18*(1-(k-.1)/.52):k<.9?PK*.18*Math.pow(1-(k-.62)/.28,1.6)+.22:.22-.75*(k-.9)/.1;
+ for(let i=0;i<=N;i++)for(let j=0;j<M;j++){const k=i/N,th=j/M*6.283;const co=1+.12*(fbm(Math.cos(th)*1.6+3,Math.sin(th)*1.6)-.5)*2;const r=k*Rv*co;const X=Math.cos(th)*r,Z=Math.sin(th)*r;
+  let h=prof(k);// borde del cráter dentado
+  if(k<.16)h+=.9*(fbm(Math.cos(th)*4+7,Math.sin(th)*4)-.5)*(1-Math.abs(k-.1)/.1);
+  h+=.55*(fbm(X*1.1,Z*1.1)-.5)*(1-k*.6)+.25*(fbm(X*3.1+9,Z*3.1)-.5)*(1-k);
+  // cono parásito al sureste
+  {const dx=X-2.3,dz=Z-1.4,d=Math.sqrt(dx*dx+dz*dz);if(d<1.4)h=Math.max(h,PK*.34*(1-d/1.4)*(1-d/1.4)*(d<.25?.75:1)+.3)}
+  // barrancos radiales
+  const gul=Math.pow(Math.max(0,Math.cos(th*7+fbm(X*.5,Z*.5)*4)),14);h-=gul*.5*(1-k)*(k>.1?1:0);
+  // ríos de lava: siguen algunos barrancos
+  const lavaR=k>.1&&k<.78?Math.pow(Math.max(0,Math.cos(th*3+1.1+fbm(X*.4,Z*.4)*3)),60)*(1-(k-.1)/.68):0;
+  pos.push(X,h,Z);
+  if(h<.3)tc.copy(snd);else if(k>.66)tc.copy(grn).lerp(rk,.35+.4*fbm(X*2,Z*2));else tc.copy(rk2).lerp(ash,Math.min(1,(1-k)*1.2)).lerp(rk,fbm(X*3,Z*3)*.4);
+  if(k<.6&&gul>.4)tc.lerp(ash,.5);let g=0;if(lavaR>.15){g=Math.min(1,lavaR*1.6);tc.lerp(hot,g)}if(k<.12){g=Math.max(g,.6*(1-k/.12));tc.copy(hot).lerp(ash,.3)}
+  col.push(tc.r,tc.g,tc.b);glw.push(g)}
  for(let i=0;i<N;i++)for(let j=0;j<M;j++){const a=i*M+j,b=i*M+(j+1)%M,c=(i+1)*M+j,d=(i+1)*M+(j+1)%M;idx.push(a,b,c,b,d,c)}
- const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("color",new THREE.Float32BufferAttribute(col,3));geo.setIndex(idx);geo.computeVertexNormals();
- vg.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95})));
+ const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("color",new THREE.Float32BufferAttribute(col,3));geo.setAttribute("glow",new THREE.Float32BufferAttribute(glw,1));geo.setIndex(idx);geo.computeVertexNormals();
+ const vmat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.93,metalness:0});const vU={uT:{value:0}};
+ vmat.onBeforeCompile=sh=>{sh.uniforms.uT=vU.uT;sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nattribute float glow;varying float vGlow;varying vec3 vWP;").replace("#include <begin_vertex>","#include <begin_vertex>\nvGlow=glow;vWP=position;");
+  sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nuniform float uT;varying float vGlow;varying vec3 vWP;").replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\nfloat fl=.65+.35*sin(uT*2.+vWP.y*3.+vWP.x*2.);totalEmissiveRadiance+=vec3(1.,.32,.06)*vGlow*vGlow*2.6*fl;").replace("#include <fog_fragment>","#ifdef USE_FOG\nfloat vfd=fogDensity*.3;float vf=1.0-exp(-vfd*vfd*fogDepth*fogDepth);gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor*.8,vf);\n#endif")};
+ anim.push(t=>vU.uT.value=t);
+ const vm=new THREE.Mesh(geo,vmat);vm.castShadow=true;vm.receiveShadow=true;vg.add(vm);
+ // brasas que suben del cráter
+ {const n=LOW?60:220,bp=new Float32Array(n*3),bs=[];for(let i=0;i<n;i++)bs.push({a:rnd()*6.28,r:rnd()*.5,k:rnd(),v:.15+rnd()*.25});const bg=new THREE.BufferGeometry();bg.setAttribute("position",new THREE.BufferAttribute(bp,3));
+  const em=new THREE.Points(bg,new THREE.PointsMaterial({color:C("#ffa040"),size:.16,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));vg.add(em);
+  anim.push(t=>{bs.forEach((b,i)=>{const k=(b.k+t*b.v*.25)%1;const rr=b.r+k*1.2;bp[i*3]=Math.cos(b.a+k*2)*rr;bp[i*3+1]=PK-1.2+k*7;bp[i*3+2]=Math.sin(b.a+k*2)*rr});bg.attributes.position.needsUpdate=true})}
  const lavaT=loader.load("tex/lavatile.jpg");lavaT.wrapS=lavaT.wrapT=THREE.RepeatWrapping;lavaT.encoding=THREE.sRGBEncoding;
- const lava=new THREE.Mesh(new THREE.CircleGeometry(Rv*.17,40).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({map:lavaT,emissiveMap:lavaT,emissive:C("#ff6a1a"),emissiveIntensity:2.4,color:C("#401005"),fog:false}));lava.position.y=PK-1.6;vg.add(lava);
+ const lava=new THREE.Mesh(new THREE.CircleGeometry(Rv*.12,40).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({map:lavaT,emissiveMap:lavaT,emissive:C("#ff6a1a"),emissiveIntensity:2.4,color:C("#401005"),fog:false}));lava.position.y=PK-2.15;vg.add(lava);
  anim.push(t=>lavaT.offset.set(t*.02,t*.013));
  vg.scale.setScalar(K);vg.position.set(VOL.x,0,VOL.z);scene.add(vg);
  const pl=new THREE.PointLight(C("#ff5a1a"),4,260,1.5);pl.position.set(VOL.x,PK*K+6,VOL.z);scene.add(pl);
