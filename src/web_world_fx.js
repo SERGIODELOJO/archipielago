@@ -133,6 +133,16 @@ async function duel(caps,crew,o){const {A,Bs,side,fwd,mid,deck,won,tie}=o;const 
  await fwait(1700);const i=anim.indexOf(camF);if(i>=0)anim.splice(i,1);crewSt.forEach(cs=>cs&&cs.c.m.position.set(0,-50,0))}
 
 // ---------- DESEMBARCO: un bote lleva a la tripulación a la playa, luchan y plantan la bandera ----------
+// barco de desembarco: uno de los barcos modelados (escolta del jugador o goleta), con la bandera en su mástil
+async function landingBoat(i){const p=GS.players[i]||{};const t=(FL(p).find(x=>x!=="brulote"))||"goleta";const D=ESCDEF[t]||ESCDEF.goleta;
+ const m=GL?await new Promise(r=>get(D.f,r)):null;if(!m){const b=rowBoat(PCOL[i]);b.scale.setScalar(1.25);return b}
+ const g=new THREE.Group();const c=m.clone();const bb=new THREE.Box3().setFromObject(c);const L=Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z)||1;const sc=9/L;c.scale.setScalar(sc);c.position.y=-bb.min.y*sc-.9;g.add(c);g.userData.glb=c;
+ g.updateMatrixWorld(true);const B=new THREE.Box3().setFromObject(c);
+ // altura de la cubierta: rayo hacia abajo en el centro del barco
+ const rc=new THREE.Raycaster(new THREE.Vector3(.6,B.max.y+5,-.8),new THREE.Vector3(0,-1,0));const hs=rc.intersectObject(c,true);const lim=B.min.y+(B.max.y-B.min.y)*.4;const dh=hs.find(h=>h.point.y<lim);const deck=dh?dh.point.y:B.min.y+(B.max.y-B.min.y)*.22;
+ g.userData.seat={y:deck+.03,z0:-2.4,dz:1.2};
+ const fl=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1,6,2),std(PCOL[i],{side:THREE.DoubleSide,emissive:C(PCOL[i]),emissiveIntensity:.4}));fl.position.set(0,B.max.y-.7,-.2);fl.rotation.y=Math.PI/2;g.add(fl);
+ g.userData.oars=[];return g}
 function rowBoat(col){const g=new THREE.Group();const wood=std("#6b4526",{roughness:.9}),dark=std("#3e2614",{roughness:.95});
  const hull=new THREE.Mesh(new THREE.BoxGeometry(1.7,.6,3.4),wood);hull.position.set(0,.3,-.2);g.add(hull);
  const bow=new THREE.Mesh(new THREE.ConeGeometry(1.2,1.6,4),wood);bow.rotation.set(Math.PI/2,0,Math.PI/4);bow.scale.set(1,1,.42);bow.position.set(0,.36,2.3);g.add(bow);
@@ -157,9 +167,9 @@ async function fxLanding(o){// o: {at, atk, def(-1 si no hay dueño), win (ganan
  const P=shorePath(k,isl,from);const perp=new THREE.Vector3(-P.d.z,0,P.d.x);
  const n=o.n||3;const atk=await Promise.all(Array.from({length:n},(_,q)=>animCrew(q)));if(atk.some(a=>!a)){atk.forEach(a=>a&&a.dispose());return}
  const defs=o.def>=0?await Promise.all([1,2].map(q=>animCrew(q))):[];
- const boat=rowBoat(PCOL[o.atk]);boat.scale.setScalar(1.25);scene.add(boat);const b0=from.clone().addScaledVector(P.d,-6).setY(0);const b1=P.water.clone();boat.position.copy(b0);faceTo(boat,b0,b1);
+ const boat=await landingBoat(o.atk);scene.add(boat);const b0=from.clone().addScaledVector(P.d,-6).setY(0);const b1=P.water.clone().addScaledVector(P.d,boat.userData.glb?2.6:0);boat.position.copy(b0);faceTo(boat,b0,b1);
  atk.forEach((a,q)=>{scene.add(a.m);a.play("idle");a.speed(.9+q*.1)});
- const seat=q=>{boat.updateMatrixWorld();return boat.localToWorld(new THREE.Vector3((q%2?-.35:.35),.6,-1.2+q*1.1))};
+ const seat=q=>{boat.updateMatrixWorld();const S=boat.userData.seat;return boat.localToWorld(S?new THREE.Vector3((q%2?-.55:.55),S.y,S.z0+q*S.dz):new THREE.Vector3((q%2?-.35:.35),.6,-1.2+q*1.1))};
  // los defensores esperan arriba
  const top=P.pts[P.pts.length-1];defs.forEach((d,q)=>{if(!d)return;scene.add(d.m);d.m.position.copy(top).addScaledVector(perp,(q?1:-1)*1.4);faceTo(d.m,d.m.position,P.pts[0]);d.play("idle")});
  // cámara de costado siguiendo al bote

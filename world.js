@@ -268,6 +268,10 @@ body.sailing .orders,body.sailing .tr{opacity:0;pointer-events:none}
 .actp .cat{margin-top:16px;border-top:1px solid rgba(224,180,90,.25);padding-top:10px}.actp .cat summary{cursor:pointer;font:400 18px "IM Fell English SC",Georgia,serif;color:#e0b45a}
 .actp .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:10px}.actp .it{border:1px solid rgba(224,180,90,.3);border-radius:10px;padding:8px 10px;font-size:13px}.actp .it.no{opacity:.6}.actp .it.ok{border-color:#7fd1a5}
 .actp .it .t{font-size:15px;color:#f3e6c8}.actp .it .w{font-style:italic;color:#cdbd98}.actp .it .c{color:#e0b45a;margin:2px 0}.actp .it .x{color:#d9ccb0}
+.actp button.ab{display:flex;gap:10px;align-items:center;max-width:360px;padding:6px 10px 6px 6px}.actp button.ab img{width:70px;height:70px;border-radius:8px;object-fit:cover;flex:none;border:1px solid rgba(224,180,90,.4)}.actp button.ab b{font-weight:400;font-size:15px}.actp button.ab em{display:block;font-size:12.5px;line-height:1.25;color:#d9ccb0;margin:2px 0}
+.actp .it img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:7px;margin-bottom:6px}
+.actp .how{background:rgba(224,180,90,.08);border:1px solid rgba(224,180,90,.3);border-radius:10px;padding:8px 12px;margin:8px 0}.actp .how summary{cursor:pointer;font:400 17px "IM Fell English SC",Georgia,serif;color:#e0b45a}.actp .how ol{margin:8px 0 2px;padding-left:22px;font-size:14px;line-height:1.4}.actp .how li{margin:5px 0}.actp .how b{color:#f3e6c8}
+.actp .isum{font-size:14px;color:#e8d4a0;margin-top:10px}.actp .isum b{color:#7fd1a5;font-weight:400}
 #aBox button.on{outline:2px solid #e0b45a;background:#3a2a14}.logbook{text-align:left;width:min(560px,92vw);max-height:70vh;overflow:auto;background:linear-gradient(#e9dcb8,#d7c393);color:#2a1d10;border-radius:10px;padding:16px 20px;font-family:Georgia,serif;box-shadow:0 10px 40px rgba(0,0,0,.6);border:3px solid #6b4a2a}.logbook h2{margin:0 0 8px;font-size:22px;text-align:center}.logbook h3{margin:10px 0 4px;font-size:15px;border-bottom:1px solid rgba(60,40,20,.35);padding-bottom:2px}.logl{display:flex;gap:8px;align-items:flex-start;margin:4px 0}.logl span{width:22px;text-align:center;flex:none}.logl p{margin:0;font-size:14px;line-height:1.35}.endrow{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;max-height:82vh;overflow:auto}.logbook.titles{width:min(380px,92vw);align-self:center}.logbook.titles .tl{font-size:15px;margin:7px 0}.logbook.titles .tl i{color:#7a2a10}.logbook .tl{display:flex;gap:8px;align-items:center;font-size:13px;margin:3px 0}.logbook .tl span{width:22px;text-align:center;flex:none}.logbook .tl i{color:#e0b45a;font-style:normal;font-weight:bold}.logbook .tl small{opacity:.7}.fc .cost{position:absolute;top:6px;right:6px;z-index:2;background:rgba(10,8,6,.8);color:#f3e6c8;border-radius:999px;padding:2px 8px;font-size:12px;font-family:Georgia,serif}.fc.big .cost{font-size:16px;padding:4px 12px}
 @media (max-width:760px){.orders{max-width:calc(100% - 32px);bottom:170px}.tr{max-width:60vw}.tr button,.orders button{font-size:13px;padding:7px 11px}.compass{display:none}}
 @media (prefers-reduced-motion:reduce){.mapw,.mapw .box,.spy,.lb{transition:none!important}.rcard.show{animation:none}}`;document.head.appendChild(css);
@@ -284,7 +288,9 @@ const hud=document.createElement("div");hud.innerHTML=`
 document.body.appendChild(hud);
 let noteT=0;function note(t,dur=7){$("note").textContent=t;$("note").classList.add("show");noteT=dur}
 function rcard(a,b){$("rcA").textContent=a;$("rcB").textContent=b;const c=$("rcard");c.classList.remove("show");void c.offsetWidth;c.classList.add("show")}
-function renderScore(){$("hRound").textContent=`RONDA ${GS.round} · FAMA PARA GANAR: ${GS.target}`;
+const clockTxt=()=>{if(!GS.dur||!GS.t0)return"";const el=(Date.now()-GS.t0)/60000,left=Math.max(0,Math.ceil(GS.dur-el)),open=el>=GS.dur*.6;return ` · ⏳ ${left} MIN`+(open?"":` · SE PUEDE GANAR EN EL MIN ${Math.ceil(GS.dur*.6)}`)};
+setInterval(()=>{try{if(GS&&GS.phase==="orders"&&!document.body.classList.contains("sailing"))$("hRound").textContent=`RONDA ${GS.round} · FAMA PARA GANAR: ${GS.target}`+clockTxt()}catch(e){}},20000);
+function renderScore(){$("hRound").textContent=`RONDA ${GS.round} · FAMA PARA GANAR: ${GS.target}`+clockTxt();
  renderRes();$("score").innerHTML=GS.players.map((p,i)=>`<div class="${i===myIdx?"me":""} ${p.gone?"gone":""}"><span class="dot" style="background:${PCOL[i]}"></span><span>${esc(p.name)}</span><span>· fama ${p.fame}</span><span style="opacity:.75">· ${terrCount(GS,i)} terr.${p.ship==="galeon"?" · galeón":""}${FL(p).length?" · flota "+(FL(p).length+1):""}${GS.wanted===i?' · <span title="Se busca: quien le gane un abordaje o le quite un territorio, +1 de fama" style="color:#e05a4a">💀 se busca</span>':""}${repOf(p)?" · "+REPN[repOf(p)]:""}${i!==myIdx&&(GS.pacts||[]).some(x=>((x.a===myIdx&&x.b===i)||(x.b===myIdx&&x.a===i))&&x.until>=GS.round)?" · 🤝":""}</span>${GS.phase==="orders"&&p.ready?'<span class="ok">listo</span>':""}</div>`).join("")}
 {const s=$("strip");const L=["N","·","NE","·","E","·","SE","·","S","·","SO","·","O","·","NO","·"];let h="";for(let k=0;k<3;k++)L.forEach((l,i)=>{h+=`<span style="position:absolute;left:${(k*16+i)*40}px;width:40px;text-align:center;${l!=="·"?"":"opacity:.5"}">${l}</span>`});s.innerHTML=h;s.style.width=(48*40)+"px"}
 let spy=false,fovT=62;function setSpy(v){spy=v;$("spy").classList.toggle("on",v);$("bSpy").classList.toggle("on",v);fovT=v?14:62;fogT=v?.019:.031}
@@ -321,8 +327,14 @@ $("oGo").onclick=()=>{if(GS.phase!=="orders"||me().ready)return;toggleMap(false)
 function openActs(){if(GS.phase!=="orders"||me().ready)return;toggleMap(false);setSpy(false);renderActs();$("actp").classList.add("on")}
 function closeActs(){$("actp").classList.remove("on")}
 $("oAct").onclick=openActs;$("actp").addEventListener("click",e=>{if(e.target.id==="actp")closeActs()});
-function renderActs(){const p=me(),box=$("aBox");const B=(label,cost,a,why)=>{cost=costFor(p,cost,a.a);const ok=!why&&canAfford(cost);return `<button data-a='${JSON.stringify(a)}' ${ok?"":"disabled"} title="${why||(!canAfford(cost)?"No tienes material suficiente":"")}">${label}<small>${why||(a.a==="patrulla"?"gasta 1 escolta":costTxt(cost))}</small></button>`};
+function renderActs(){const p=me(),box=$("aBox");const B=(label,cost,a,why)=>{cost=costFor(p,cost,a.a);const ok=!why&&canAfford(cost);const A0=ACTS[a.a]||{};return `<button class="ab" data-a='${JSON.stringify(a)}' ${ok?"":"disabled"} title="${why||(!canAfford(cost)?"No tienes material suficiente":"")}">${ARTK[a.a]?`<img alt="" src="cartas/arte/c-${ARTK[a.a]}.jpg" onerror="this.remove()">`:""}<span><b>${label}</b>${A0.x?`<em>${A0.x}</em>`:""}<small>${why||(a.a==="patrulla"?"gasta 1 escolta":"Cuesta: "+costTxt(cost))}</small></span></button>`};
  let h=`<h3>Acciones de esta ronda</h3><div class="hint">Se hacen antes de zarpar, donde está anclado tu barco ahora. Después navegas con la ruta del mapa.</div>`;
+ h+=`<details class="how" ${GS.round<=2?"open":""}><summary>¿Cómo funcionan las islas?</summary><ol>
+<li><b>Llega a una isla.</b> Traza la ruta en el mapa hasta una casilla de mar pegada a la isla. Las acciones se hacen al empezar la ronda siguiente, con el barco ya anclado allí.</li>
+<li><b>Coloniza.</b> Cada isla tiene 1 a 3 territorios (las banderitas del mapa). Uno libre cuesta 1 🪵 1 🧵 1 🍾 y te da <b>+1 de fama</b> mientras sea tuyo y <b>1 material de esa isla cada ronda</b>. Si la isla entera es tuya, +1 de fama extra.</li>
+<li><b>Mejora tu isla.</b> Donde ya tengas territorio puedes levantar un <b>fuerte</b> (+3 de defensa), un <b>almacén</b> (produce 1 más), un <b>muelle</b> (sirve de puerto), una <b>torre vigía</b> (ves barcos cerca) o dejar una <b>patrulla</b>.</li>
+<li><b>Quita territorios.</b> Si el territorio es de otro, puedes <b>asaltarlo</b> (1 🍾). Tu fuerza (cañones, tripulantes, escoltas y el ron que apuestes) contra su defensa: 2, +3 con fuerte, + su barco si está al lado. Si ganas, pasa a ser tuyo y él pierde esa fama.</li>
+<li><b>Todo es secreto.</b> Nadie ve lo que eliges hasta que todos confirman órdenes.</li></ol></details>`;
  h+=`<div class="row hint">★ <b>${HAB[capOf(p)].n}</b>: ${HAB[capOf(p)].x} &nbsp; ${p.mis?`🗝 <b>Misión secreta: ${MIS[p.mis].n}</b>: ${MIS[p.mis].x}${p.misOk?" ✓ cumplida":" (+2 de fama)"}`:""}</div>`;
  if(GS.auction){const A=AUC[GS.auction.it];h+=`<h4>🔨 Subasta en la taberna: ${A.n}</h4><div class="legslot" data-it="${GS.auction.it}"></div><div class="hint">Puja en secreto: gana quien más ron ponga y solo paga el ganador. Si empatáis, gana quien tenga menos fama.</div><div class="row"><button id="bidM">−</button><b>Tu puja: ${bid} ron</b><button id="bidP">+</button></div>`}
  if(GS.council){h+=`<h4>🏛 Consejo pirata</h4><div class="hint">La ley ganadora manda hasta el próximo consejo. Tienes 1 voto y cada ron que pagues es 1 voto más.</div><div class="row">${GS.council.o.map((k,q)=>`<button data-vote="${q}" class="${vote===q?"on":""}">${LAWS[k].n}<small>${LAWS[k].x}</small></button>`).join("")}</div><div class="row"><span>Votos comprados</span><button id="vbM">−</button><b>${vbuy}</b><button id="vbP">+</button></div>`}
@@ -334,20 +346,21 @@ function renderActs(){const p=me(),box=$("aBox");const B=(label,cost,a,why)=>{co
  h+=`<h4>Islas junto a tu barco</h4>`;
  if(!isl.length)h+=`<div class="hint">No hay ninguna isla junto a tu barco. Navega hasta una para colonizarla o asaltarla.</div>`;
  isl.forEach(o=>{const k=key(o.c),T=GS.terr[k]||[],F=GS.fort[k]||[];const m=TMAT[o.t];
+  {const nf=T.filter(x=>x<0).length,nm=T.filter(x=>x===myIdx).length,no=T.length-nf-nm;h+=`<div class="isum">${INAME[o.t]}: ${T.length} territorio${T.length>1?"s":""} · ${nf?`<b>${nf} libre${nf>1?"s":""}</b> (colonízalo)`:"ninguno libre"}${nm?` · ${nm} tuyo${nm>1?"s":""}`:""}${no?` · ${no} de rivales (puedes asaltarlo)`:""}</div>`}
   h+=`<div class="row"><b>${INAME[o.t]}</b><span class="hint">da ${MATS.find(x=>x[0]===m)[2]} ${MATS.find(x=>x[0]===m)[1].toLowerCase()}</span>${Object.keys(myB(k)).map(t=>`<span title="${ACTS[t].n}">${ACTS[t].i}</span>`).join("")}${T.map((ow,si)=>`<span class="slot"><i style="background:${ow<0?"transparent;border:1px dashed #cdbd98":PCOL[ow]}"></i>${ow<0?"libre":ow===myIdx?"tuyo":esc(GS.players[ow].name)}${F[si]?" 🏰":""}</span>`).join("")}</div><div class="row">`;
   const free=T.filter(x=>x<0).length-acts.filter(a=>a.a==="colonizar"&&a.k===k).length;
   if(free>0)h+=B("Colonizar territorio",ACTS.colonizar.c,{a:"colonizar",k,s:T.indexOf(-1)});
   T.forEach((ow,si)=>{if(ow===myIdx&&!F[si]&&!acts.some(a=>a.a==="fuerte"&&a.k===k&&a.s===si))h+=B("Levantar fuerte",ACTS.fuerte.c,{a:"fuerte",k,s:si});
    if(ow>=0&&ow!==myIdx&&!acts.some(a=>a.a==="asalto"&&a.k===k&&a.s===si)){const d=2+(F[si]?3:0);h+=B(`Asaltar a ${esc(GS.players[ow].name)}${F[si]?" (fuerte)":""}`,ACTS.asalto.c,{a:"asalto",k,s:si})+`<span class="hint">defensa ${d}${SHIPS[ow].visible?" + su barco si está al lado":""} · tu fuerza ${strengthOf(p,bet)}</span>`}});
-  if(T.includes(myIdx)||acts.some(a=>a.a==="colonizar"&&a.k===k))["almacen","muelle","torre","patrulla"].forEach(t=>{h+=B(`${ACTS[t].i} ${ACTS[t].n}`,ACTS[t].c,{a:t,k},myB(k)[t]||acts.some(a=>a.a===t&&a.k===k)?"Ya lo tienes":t==="patrulla"&&FL(p).filter(x=>x!=="brulote").length-acts.filter(a=>a.a==="patrulla").length<=0?"Necesitas una escolta (no brulote)":"")});
+  if(T.includes(myIdx)||acts.some(a=>a.a==="colonizar"&&a.k===k))["almacen","muelle","torre","patrulla"].forEach(t=>{h+=B(`${ACTS[t].n}`,ACTS[t].c,{a:t,k},myB(k)[t]||acts.some(a=>a.a===t&&a.k===k)?"Ya lo tienes":t==="patrulla"&&FL(p).filter(x=>x!=="brulote").length-acts.filter(a=>a.a==="patrulla").length<=0?"Necesitas una escolta (no brulote)":"")});
   h+=`</div>`});
  const home=atHomeC(),qn=id=>acts.filter(a=>a.a===id).length;
  h+=`<h4>Tu barco y tu puerto</h4><div class="row">`;
- h+=B(`${ACTS.emboscada.i} Emboscada`,ACTS.emboscada.c,{a:"emboscada"},qn("emboscada")?"Ya la has preparado":!neighbors(cellOf(p.cell)).some(c=>ISLMAP[key(c)])?"Tienes que estar junto a una isla":"");
+ h+=B(`Emboscada`,ACTS.emboscada.c,{a:"emboscada"},qn("emboscada")?"Ya la has preparado":!neighbors(cellOf(p.cell)).some(c=>ISLMAP[key(c)])?"Tienes que estar junto a una isla":"");
  h+=B(`Reclutar tripulante (${(p.crew||0)+qn("tripulante")}/4)`,ACTS.tripulante.c,{a:"tripulante"},(p.crew||0)+qn("tripulante")>=4?"Ya tienes 4":"");
  h+=B(`Fundir cañón (${p.cannons+qn("canon")}/6)`,ACTS.canon.c,{a:"canon"},!home?"Solo en tu puerto":p.cannons+qn("canon")>=6?"Ya tienes 6":"");
  h+=`</div><h4>Tu flota (${FL(p).length+1} barco${FL(p).length?"s":""}): ${["Tu "+(p.ship==="galeon"?"galeón":"balandra")].concat(FL(p).map(t=>ACTS[t].i+" "+ACTS[t].n)).join(" · ")}</h4><div class="row">`;
- {const nf=FL(p).length+FLS.reduce((a,t)=>a+qn(t),0);FLS.forEach(t=>{h+=B(`${ACTS[t].i} ${ACTS[t].n}`,ACTS[t].c,{a:t},!home?"Solo en tu puerto":nf>=FLMAX?`Flota completa (${FLMAX} escoltas)`:"")});}
+ {const nf=FL(p).length+FLS.reduce((a,t)=>a+qn(t),0);FLS.forEach(t=>{h+=B(`${ACTS[t].n}`,ACTS[t].c,{a:t},!home?"Solo en tu puerto":nf>=FLMAX?`Flota completa (${FLMAX} escoltas)`:"")});}
  h+=`</div><div class="row">`;
  h+=B("Botar galeón",ACTS.galeon.c,{a:"galeon"},p.ship==="galeon"||qn("galeon")?"Ya es un galeón":!home?"Solo en tu puerto":"");
  h+=`</div>`;
@@ -358,7 +371,7 @@ function renderActs(){const p=me(),box=$("aBox");const B=(label,cost,a,why)=>{co
   const opt=sel=>MATS.map(([m,n,e])=>`<option value="${m}" ${m===sel?"selected":""}>${e} ${n}</option>`).join("");const num=id=>`<select id="${id}">${[1,2,3].map(n=>`<option>${n}</option>`).join("")}</select>`;
   near.forEach(q=>{const pc=pact(q.i);h+=`<div class="row"><b style="color:${PCOL[q.i]}">${esc(q.name)}</b>${pc?`<span class="hint">🤝 pacto hasta la ronda ${pc.until}</span>`:""}</div><div class="row"><span>Le doy</span>${num("tg"+q.i)}<select id="tgm${q.i}">${opt("madera")}</select><span>por</span>${num("tr"+q.i)}<select id="trm${q.i}">${opt("hierro")}</select><button data-of="${q.i}">Proponer cambio</button>${pc?"":`<button data-pact="${q.i}">Proponer pacto (3 rondas)</button>`}</div>`})}
  h+=`<h4>Cambiar materiales</h4>${GS.mkt?`<div class="hint">📈 Mercado: ${mktTxt(GS.mkt)}</div>`:""}<div class="row"><span id="aR">Doy ${tradeR(p,home,"madera",GS.mkt)}</span><select id="aGive">${MATS.map(([m,n,e])=>`<option value="${m}">${e} ${n}</option>`).join("")}</select><span>por 1</span><select id="aGet">${MATS.map(([m,n,e])=>`<option value="${m}" ${m==="hierro"?"selected":""}>${e} ${n}</option>`).join("")}</select><button id="aTrade">Cambiar</button><span class="hint">${home?"En tu puerto el cambio es 2 por 1.":trade2(p,false)?"Tu barco cambia 2 por 1 en cualquier sitio.":"En tu puerto sería 2 por 1."}</span></div>`;
- h+=`<details class="cat"><summary>Catálogo: todo lo que se puede hacer</summary><div class="grid">${Object.entries(ACTS).filter(([id])=>id!=="comercio").map(([id,A])=>`<div class="it ${canAfford(costFor(p,A.c,id))?"ok":"no"}"><div class="t">${A.i||""} ${A.n}</div><div class="w">${A.w||""}</div><div class="c">${A.fleet?"gasta 1 escolta":costTxt(costFor(p,A.c,id))}${canAfford(costFor(p,A.c,id))?"":" · te falta material"}</div><div class="x">${A.x}</div></div>`).join("")}</div></details>`;
+ h+=`<details class="cat"><summary>Catálogo: todo lo que se puede hacer</summary><div class="grid">${Object.entries(ACTS).filter(([id])=>id!=="comercio").map(([id,A])=>`<div class="it ${canAfford(costFor(p,A.c,id))?"ok":"no"}">${ARTK[id]?`<img alt="" src="cartas/arte/c-${ARTK[id]}.jpg" onerror="this.remove()">`:""}<div class="t">${A.n}</div><div class="w">${A.w||""}</div><div class="c">${A.fleet?"gasta 1 escolta":costTxt(costFor(p,A.c,id))}${canAfford(costFor(p,A.c,id))?"":" · te falta material"}</div><div class="x">${A.x}</div></div>`).join("")}</div></details>`;
  h+=`<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="pri" id="aDone">Listo</button></div>`;
  const st=box.scrollTop;box.innerHTML=h;box.scrollTop=st;
  box.querySelectorAll("button[data-vote]").forEach(b=>b.onclick=()=>{vote=+b.dataset.vote;renderActs()});
@@ -437,7 +450,7 @@ function drawMap(){const x=mx;x.setTransform(MSC,0,0,MSC,0,0);x.drawImage(parchB
  CELLS.forEach(c=>{if(seen.has(key(c))||!neighbors(c).some(n=>seen.has(key(n))))return;const [px,py]=mP(c);hexPath(x,c,.98);x.save();x.clip();x.strokeStyle="rgba(70,45,20,.2)";x.lineWidth=1;for(let d=-2*MS;d<2*MS;d+=7){x.beginPath();x.moveTo(px+d-MS,py-MS);x.lineTo(px+d+MS,py+MS);x.stroke()}x.restore()});
  CELLS.forEach(c=>{if(!seen.has(key(c)))return;hexPath(x,c);x.strokeStyle="rgba(60,45,25,.16)";x.lineWidth=1;x.stroke()});
  routeOpts().forEach(c=>{hexPath(x,c,.9);x.fillStyle="rgba(150,30,25,.08)";x.fill();x.strokeStyle="rgba(150,30,25,.6)";x.lineWidth=2.5;x.setLineDash([5,5]);x.stroke();x.setLineDash([])});
- CELLS.forEach(c=>{if(!seen.has(key(c)))return;const o=ISLMAP[key(c)];if(o)drawIsland(x,o,c);if(c===VOL)drawVolcano(x,c)});
+ CELLS.forEach(c=>{if(!seen.has(key(c)))return;const o=ISLMAP[key(c)];if(o)drawIsland(x,o,c);if(c===VOL&&!PL)drawVolcano(x,c)});
  // tormenta: zona peligrosa y hacia dónde irá
  if(GS.storm){const sc=cellOf(GS.storm.c);if(sc){const [px,py]=mP(sc);[sc].concat(neighbors(sc)).forEach(c=>{hexPath(x,c,1);x.fillStyle="rgba(30,35,45,.28)";x.fill()});
   x.save();x.translate(px,py);x.strokeStyle="rgba(25,30,40,.85)";x.lineWidth=2.5;for(let k=0;k<3;k++){x.beginPath();for(let a=0;a<9.5;a+=.2){const r=4+a*MS*.11;x.lineTo(Math.cos(a+k*2.1)*r,Math.sin(a+k*2.1)*r)}x.stroke()}
@@ -455,7 +468,7 @@ function drawMap(){const x=mx;x.setTransform(MSC,0,0,MSC,0,0);x.drawImage(parchB
  GS.players.forEach((p,i)=>{const y=70+i*24;x.fillStyle=PCOL[i];x.fillRect(864,y-11,14,12);x.strokeRect(864,y-11,14,12);x.fillStyle="rgba(45,25,10,.95)";x.font="15px Georgia";x.fillText(`${p.name}: ${terrCount(GS,i)} terr. · fama ${p.fame}`,886,y)});x.restore();
  x.save();x.translate(1010,770);x.strokeStyle="rgba(50,30,14,.8)";x.lineWidth=1.5;x.beginPath();x.arc(0,0,48,0,6.28);x.stroke();for(let i=0;i<8;i++){const a=i/8*6.283-Math.PI/2,l=i%2?34:58;x.fillStyle=i%2?"rgba(160,40,30,.7)":"rgba(50,30,14,.85)";x.beginPath();x.moveTo(Math.cos(a)*l,Math.sin(a)*l);x.lineTo(Math.cos(a+.25)*9,Math.sin(a+.25)*9);x.lineTo(Math.cos(a-.25)*9,Math.sin(a-.25)*9);x.fill()}x.font="22px 'IM Fell English SC',Georgia,serif";x.fillStyle="rgba(50,30,14,.9)";x.textAlign="center";x.fillText("N",0,-64);x.restore();
  x.font="34px 'IM Fell English SC',Georgia,serif";x.fillStyle="rgba(45,25,10,.85)";x.textAlign="left";x.fillText("Carta de "+me().name,36,826);
- x.font="italic 19px 'IM Fell English',Georgia,serif";x.fillText(GS.phase==="orders"&&!me().ready?`Toca casillas contiguas para trazar tu ruta (hasta ${maxRoute()}). ✕ = cofre sin abrir.`:`${seen.size} de ${CELLS.length} casillas exploradas`,36,44)}
+ x.font="italic 19px 'IM Fell English',Georgia,serif";x.fillText(GS.phase==="orders"&&!me().ready?`Toca casillas contiguas para trazar tu ruta (hasta ${maxRoute()}). ✕ = cofre sin abrir.`:(PL?"Elige con cuidado: el volcán sigue oculto en la niebla.":`${seen.size} de ${CELLS.length} casillas exploradas`),36,44)}
 let mapOpen=false,prevPitch=0,mapTimer=0;function toggleMap(v){const want=v===undefined?!mapOpen:v;if(want===mapOpen)return;mapOpen=want;clearTimeout(mapTimer);
  if(mapOpen){setSpy(false);prevPitch=pitchT;pitchT=-.75;sizeMap();drawMap();mapTimer=setTimeout(()=>$("mapw").classList.add("on"),240)}else{$("mapw").classList.remove("on");pitchT=prevPitch}}
 $("bMap").onclick=()=>toggleMap(true);$("bClose").onclick=()=>{toggleMap(false);renderOrders()};$("bClr").onclick=()=>{route=[];drawMap();renderOrders()};
@@ -466,6 +479,9 @@ mapc.addEventListener("click",e=>{const r=mapc.getBoundingClientRect();const X=(
 // ---------- cartas ----------
 const CBY={};CARD_LIST.forEach(([id,n,t,k,x])=>CBY[id]={id,n,t,k,x});
 const TLABEL={ventaja:"Ventaja",sabotaje:"Sabotaje",sigilo:"Sigilo",respuesta:"Respuesta"};
+// ilustraciones de las cartas de acciones y sucesos (renders de los modelos 3D)
+const ARTK={colonizar:"colonizar",fuerte:"fuerte",tripulante:"tripulante",canon:"canon",galeon:"galeon",escolta:"escolta",almacen:"almacen",muelle:"muelle",torre:"torre",patrulla:"patrulla",bergantin:"bergantin",goleta:"goleta",mercante:"mercante",brulote:"brulote",asalto:"asalto",emboscada:"asalto",mision:"mision",cofre:"cofre",tesoro:"tesoro",volcan:"volcan",tormenta:"tormenta",kraken:"kraken",trato:"trato",fin:"fin"};
+const artHTML=(k,fb)=>`<div class="art">${fb||""}${ARTK[k]?`<img alt="" src="cartas/arte/c-${ARTK[k]}.jpg" onerror="this.remove()">`:""}</div>`;
 function cardEl(id,big){const c=CBY[id];const e=document.createElement("div");e.className="fc"+(big?" big":"");e.dataset.t=c.t;e.tabIndex=0;
  e.innerHTML=(c.t==="respuesta"?"":`<div class="cost">${costTxt(CARDCOST(id,me()))}</div>`)+`<div class="art">${c.n.replace("¡","")[0]}<img alt="" src="${c.id==="remiendo-rapido"?"https://th.bing.com/th/id/OIG2.wnWgr_tqxa8iAUwtXqgh?w=400&pid=ImgGn":`cartas/arte/${c.id}.jpg`}" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='cartas/arte/${c.id}.jpg'}else this.remove()"></div><div class="bot"><div class="tp">${TLABEL[c.t]}</div><div class="nm">${c.n}</div><div class="tx">${c.x}</div></div>`;return e}
 const LEGART={canon:"OIG2.9dJHDkyKU_1sUTxNDHVj",mapa:"OIG3.nxPd2fnlWVnmvUlI2Ng2",fantasma:"OIG1.gedbFYru5eAddTndSbKf",patente:"OIG2.jLZ9_V0DlsMVXxSgI1mL",baraja:"OIG2.eTW0wA269sOmc98_4XIZ",bodega:"OIG4.UrR2xZU0SCDhBwSqYmD8"};
@@ -628,7 +644,7 @@ async function hostResolve(){const G=H.G;if(G.phase!=="orders")return;G.phase="r
   if(ok){p.misOk=true;p.bonus=(p.bonus||0)+2;E(i,{k:"mission",txt:`¡Misión secreta cumplida: ${MIS[p.mis].n}! ${MIS[p.mis].x} +2 de fama para siempre.`});E(-1,{k:"note",txt:`${p.name} ha cumplido su misión secreta (${MIS[p.mis].n}): +2 de fama.`})}});
  P.forEach((p,i)=>p.fame=famOf(G,i)); {const live=P.filter(p=>!p.gone).sort((a,b)=>b.fame-a.fame);G.wanted=live.length>1&&live[0].fame>=3&&live[0].fame>live[1].fame?live[0].i:-1}
  if(G.storm){const DIR=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];if(Math.random()<.3)G.storm.d=(G.storm.d+(Math.random()<.5?1:5))%6;let moved=false;for(let t=0;t<6&&!moved;t++){const d=DIR[G.storm.d];const n=[G.storm.c[0]+d[0],G.storm.c[1]+d[1]];const nc=cellOf(n);if(nc&&cdist(nc,VOL)>=1){G.storm.c=n;moved=true}else G.storm.d=(G.storm.d+2+Math.floor(Math.random()*3))%6}}
- P.forEach(p=>{if(!p.gone&&repOf(p)==="mercader")p.rum+=1});const top=P.filter(p=>!p.gone).sort((a,b)=>b.fame-a.fame||b.rum-a.rum);if(top.length&&top[0].fame>=G.target){G.winner=top[0].i;G.phase="over"}
+ P.forEach(p=>{if(!p.gone&&repOf(p)==="mercader")p.rum+=1});const top=P.filter(p=>!p.gone).sort((a,b)=>b.fame-a.fame||b.rum-a.rum);const elM=G.t0?(Date.now()-G.t0)/60000:0,durM=G.dur||0;if(top.length&&((top[0].fame>=G.target&&(!durM||elM>=durM*.6))||(durM&&elM>=durM))){G.winner=top[0].i;G.phase="over";G.byTime=!(top[0].fame>=G.target)}
  else{// sucesos del mar que afectan a todos
   if(G.round>=(QS.has("ev")?1:2)&&Math.random()<(QS.has("ev")?1:.17)){const live=P.filter(p=>!p.gone);let k=QS.get("evk")!=null?+QS.get("evk"):Math.floor(Math.random()*8);if(k===5&&QS.get("evk")==null)k=[0,1,3][Math.floor(Math.random()*3)];let n,txt,lead_i,vic_i;
    if(k===4){const lead=live.slice().sort((a,b)=>b.fame-a.fame)[0];lead_i=lead.i;const lost=steal(lead,null,2);lead.cell=lead.home.slice();n="El kraken despierta";txt=`Un kraken hambriento ataca al barco con más fama: ${lead.name} pierde ${mname(lost)} y vuelve a puerto.`}
@@ -657,7 +673,7 @@ function worldMsg(m){
  if(m.t==="msg"){note(m.txt,8);sndHit("chest");return}
  if(m.t==="placed"){note(m.txt,6);sndHit("chest");return}
  if(m.t==="offer"){const o=m.o,q=GS.players[o.from];const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";
-  t.innerHTML=`<div class="art">🤝</div><div class="bot"><div class="tp">Trato</div><div class="nm">${esc(q.name)} te propone</div><div class="tx">${o.kind==="pact"?"Un pacto de no agresión durante 3 rondas: no habrá abordajes entre vosotros ni saqueos en vuestras islas. Si uno asalta al otro, pierde 1 de fama.":`Te da ${costTxt(o.give)} a cambio de ${costTxt(o.get)}.`}</div></div>`;
+  t.innerHTML=`${artHTML("trato","🤝")}<div class="bot"><div class="tp">Trato</div><div class="nm">${esc(q.name)} te propone</div><div class="tx">${o.kind==="pact"?"Un pacto de no agresión durante 3 rondas: no habrá abordajes entre vosotros ni saqueos en vuestras islas. Si uno asalta al otro, pierde 1 de fama.":`Te da ${costTxt(o.give)} a cambio de ${costTxt(o.get)}.`}</div></div>`;
   sndHit("chest");showCov([t],"",[["Rechazar",()=>{hideCov();Net.toHost({t:"offerAns",id:o.id,ok:false})}],["Aceptar",()=>{hideCov();Net.toHost({t:"offerAns",id:o.id,ok:true})},true]],45000);return}
  if(m.t==="offerSent"){note(`Propuesta enviada a ${esc(GS.players[m.o.to].name)}. Esperando su respuesta…`,6);return}
  if(m.t==="offerRes"){const o=m.o,other=GS.players[o.from===myIdx?o.to:o.from].name;note(m.ok?(o.kind==="pact"?`¡Pacto sellado con ${esc(other)} durante 3 rondas!`:`Trato hecho con ${esc(other)}.`):`${esc(other)} no acepta el trato.${m.why?" "+m.why:""}`,7);if(typeof renderActs==="function"&&$("actp").classList.contains("on"))renderActs();renderRes&&renderRes();return}if(m.t==="ready"){m.ready.forEach((r,i)=>GS.players[i].ready=r);if(m.gone)m.gone.forEach((g,i)=>GS.players[i].gone=g);if(GS.phase==="orders")renderScore();return}
@@ -680,10 +696,10 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
  const fns=[];
  pre.forEach(e=>fns.push(async nx=>{if(e.card==="kraken-a-sueldo"&&e.to===myIdx&&e.txt.startsWith("¡El kraken"))await fxKraken(myIdx).catch(()=>{});const b=cardEl(e.card,true);b.classList.add("flip");showCov([b],e.txt,[["Seguir",()=>{hideCov();if(e.reveal)e.reveal.forEach(([c,r])=>reveal(cellOf(c),r));setTimeout(nx,300)},true]],7000)}));
  mine.filter(e=>e.k==="assault").forEach(e=>fns.push(nx=>{fxAssault(e).catch(()=>{}).then(()=>{rcard(e.def?(e.win?"DEFENSA":"TERRITORIO PERDIDO"):(e.win?"CONQUISTA":"ASALTO FALLIDO"),"Asalto");if(e.win&&!e.def){const k2=key(cellOf(e.at));const T=GS.terr[k2];if(T){const s2=T.findIndex(o=>o>=0&&o!==myIdx);if(s2>=0)T[s2]=myIdx;placeColonies()}}
-  setTimeout(()=>{const t=document.createElement("div");t.className="fc big";t.dataset.t=e.win?"ventaja":"sabotaje";t.innerHTML=`<div class="art">⚔</div><div class="bot"><div class="tp">Asalto</div><div class="nm">${e.def?(e.win?"¡Resistís!":"Te han conquistado"):(e.win?"¡Territorio conquistado!":"Os rechazan")}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)},1500)})}));
+  setTimeout(()=>{const t=document.createElement("div");t.className="fc big";t.dataset.t=e.win?"ventaja":"sabotaje";t.innerHTML=`${artHTML("asalto","⚔")}<div class="bot"><div class="tp">Asalto</div><div class="nm">${e.def?(e.win?"¡Resistís!":"Te han conquistado"):(e.win?"¡Territorio conquistado!":"Os rechazan")}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)},1500)})}));
  const blds=mine.filter(e=>e.k==="build");if(blds.length)fns.push(async nx=>{const col=blds.find(e=>e.b==="colonizar"&&e.at);if(col&&typeof fxLanding==="function"){try{await fxLanding({at:col.at,atk:myIdx,def:-1,win:true,n:2})}catch(err){console.warn(err)}cineOff()}
-  const B={colonizar:["⚑","Nuevo territorio"],fuerte:["🏰","Fuerte"],tripulante:["👥","Tripulación"],canon:["💣","Cañón"],galeon:["🚢","Galeón"],escolta:["⛵","Escolta"],almacen:["📦","Almacén"],muelle:["⚓","Muelle"],torre:["🗼","Torre vigía"],patrulla:["🛡","Patrulla"]};
-  const nodes=blds.map(e=>{const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`<div class="art">${B[e.b][0]}</div><div class="bot"><div class="tp">Construcción</div><div class="nm">${B[e.b][1]}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");return t});
+  const B={colonizar:["⚑","Nuevo territorio"],fuerte:["🏰","Fuerte"],tripulante:["👥","Tripulación"],canon:["💣","Cañón"],galeon:["🚢","Galeón"],escolta:["⛵","Escolta"],almacen:["📦","Almacén"],muelle:["⚓","Muelle"],torre:["🗼","Torre vigía"],patrulla:["🛡","Patrulla"]};FLS.forEach(t=>B[t]=[ACTS[t].i,ACTS[t].n]);
+  const nodes=blds.map(e=>{const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML(e.b,(B[e.b]||["⚒"])[0])}<div class="bot"><div class="tp">Construcción</div><div class="nm">${(B[e.b]||["",ACTS[e.b]?ACTS[e.b].n:"Construcción"])[1]}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");return t});
   if(blds.some(e=>e.b==="galeon"))setTimeout(()=>{GS.players[myIdx].ship="galeon";setShipModel(myIdx)},400);
   sndHit("chest");showCov(nodes.slice(0,3),"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)});
  fns.push(nx=>{rcard("¡LEVEN ANCLAS!","Ronda "+GS.round);setTimeout(nx,900)});
@@ -694,9 +710,9 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
     note(e.txt,9);setTimeout(()=>{if(e.lost)fadeJump(myShip,cellOf(m.G.players[myIdx].home));nx()},1600)})}else nx()}});
  fns.push(nx=>{// barcos enviados a puerto vuelven allí
   m.sent.forEach((s,i)=>{if(s){const h=cellOf(m.G.players[i].home);fadeJump(SHIPS[i],h)}});setTimeout(nx,m.sent.some(Boolean)?900:10)});
- mine.filter(e=>e.k==="mission").forEach(e=>fns.push(nx=>{sndHit("treasure");const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`<div class="art">🗝</div><div class="bot"><div class="tp">Misión secreta</div><div class="nm">¡Cumplida!</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)}));
+ mine.filter(e=>e.k==="mission").forEach(e=>fns.push(nx=>{sndHit("treasure");const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML("mision","🗝")}<div class="bot"><div class="tp">Misión secreta</div><div class="nm">¡Cumplida!</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)}));
  mine.filter(e=>["chest","treasure","erupt","sea","storm"].includes(e.k)).forEach(e=>fns.push(async nx=>{if(e.k==="storm"){e.n="¡Atrapados en la tormenta!";await fxSea({kind:5}).catch(()=>{})}if(e.k==="sea")await fxSea(e).catch(()=>{});if(e.k==="erupt")await fxErupt().catch(()=>{});sndHit(e.k);if(e.k==="treasure")rcard("TESORO",e.txt.includes("mapa")?"+1 de fama":"+3 de fama");if(e.k==="sea"||e.k==="storm")rcard(e.k==="storm"?"TORMENTA":"SUCESO DEL MAR",e.n);
-  const t=document.createElement("div");t.className="fc big";t.dataset.t=e.k==="sea"||e.k==="storm"?"sigilo":e.k==="chest"?"ventaja":e.k==="treasure"?"ventaja":"sabotaje";t.innerHTML=`<div class="art">${e.k==="sea"||e.k==="storm"?"≋":e.k==="erupt"?"🌋":e.k==="treasure"?"✦":"⚿"}</div><div class="bot"><div class="tp">${e.k==="sea"||e.k==="storm"?"Suceso del mar":e.k==="chest"?"Cofre":e.k==="treasure"?"Tesoro":"Volcán"}</div><div class="nm">${e.k==="sea"||e.k==="storm"?e.n:e.k==="chest"?"Exploración":e.k==="treasure"?(e.txt.includes("mapa")?"Tesoro enterrado":"El tesoro del volcán"):"¡Erupción!"}</div><div class="tx">${e.txt}</div></div>`;
+  const t=document.createElement("div");t.className="fc big";t.dataset.t=e.k==="sea"||e.k==="storm"?"sigilo":e.k==="chest"?"ventaja":e.k==="treasure"?"ventaja":"sabotaje";t.innerHTML=`${artHTML(e.k==="storm"?"tormenta":e.k==="sea"?(/kraken/i.test(e.n||"")?"kraken":/ceniza|volc/i.test(e.n||"")?"volcan":/ron/i.test(e.n||"")?"trato":"tormenta"):e.k==="erupt"?"volcan":e.k==="treasure"?(e.txt.includes("mapa")?"mision":"tesoro"):"cofre",e.k==="sea"||e.k==="storm"?"≋":e.k==="erupt"?"🌋":e.k==="treasure"?"✦":"⚿")}<div class="bot"><div class="tp">${e.k==="sea"||e.k==="storm"?"Suceso del mar":e.k==="chest"?"Cofre":e.k==="treasure"?"Tesoro":"Volcán"}</div><div class="nm">${e.k==="sea"||e.k==="storm"?e.n:e.k==="chest"?"Exploración":e.k==="treasure"?(e.txt.includes("mapa")?"Tesoro enterrado":"El tesoro del volcán"):"¡Erupción!"}</div><div class="tx">${e.txt}</div></div>`;
   t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)}));
  mine.filter(e=>e.k==="rumor").forEach(e=>rumors[e.who]={at:e.at,round:m.G.round});
  fns.push(nx=>{logRound(m,mine);showLog(false,()=>setTimeout(nx,200))});
@@ -710,14 +726,17 @@ function arrivalNote(){const c=cellOf(me().cell);const vis=GS.players.filter((p,
  if(vis.length)note(`Velas a la vista: ${vis.map(p=>p.name).join(", ")}. Si acabáis en la misma casilla habrá abordaje.`,9);
  else if(cdist(c,VOL)<=1)note("El volcán ruge a vuestro lado. El tesoro está cerca, y el peligro también.",8);
  
- else note("Abre Acciones para colonizar o construir, y el mapa (M) para trazar la ruta.",7)}
+ else note("Abre Acciones para colonizar o construir, y el mapa (M) para trazar la ruta.",7);
+ // primera vez junto a una isla con territorio libre: explicación con su carta
+ try{const isl=neighbors(c).map(n=>ISLMAP[key(n)]).find(o=>o&&o.port===undefined&&(GS.terr[key(o.c)]||[]).includes(-1));let seenT=false;try{seenT=localStorage.getItem("arch_tut_isla")==="1"}catch(e){}
+  if(isl&&!seenT&&GS.phase==="orders"){try{localStorage.setItem("arch_tut_isla","1")}catch(e){}const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML("colonizar","⚑")}<div class="bot"><div class="tp">Estás junto a una isla</div><div class="nm">${INAME[isl.t]}</div><div class="tx">Abre <b>Acciones</b> y elige <b>Colonizar territorio</b>: +1 de fama mientras sea tuyo y 1 material de la isla cada ronda. Luego podrás fortificarlo o construir en él.</div></div>`;t.classList.add("flip");setTimeout(()=>showCov([t],"",[["Abrir Acciones",()=>{hideCov();openActs()},true],["Luego",hideCov]]),900)}}catch(e){console.warn(e)}}
 const TITLES=[["bw","⚔","Terror de los mares","abordajes ganados"],["aw","🏰","Conquistador","asaltos ganados"],["ron","🍾","Rey del ron","barriles gastados en abordajes"],["tr","🐍","Traidor de la Cofradía","pactos rotos"],["com","⚖","Mercader de seda","cambios en el mercado"],["cof","⚿","Cazatesoros","cofres abiertos"],["saq","💰","Saqueador","almacenes saqueados"],["apu","🎲","Tahúr de taberna","apuestas acertadas"],["reh","⛓","Carcelero","rehenes capturados"],["bl","🐟","Pez de agua dulce","abordajes perdidos"]];
 function titlesHTML(){const P=GS.players.filter(p=>!p.gone);const out=[];TITLES.forEach(([k,ic,n,d])=>{const v=P.map(p=>(p.st&&p.st[k])||0);const mx=Math.max(0,...v);if(mx<1)return;const who=P.filter((p,j)=>v[j]===mx).map(p=>`<b style="color:${PCOL[p.i]}">${esc(p.name)}</b>`).join(" y ");out.push(`<div class="tl"><span>${ic}</span><div><i>${n}</i> ${who} <small>(${mx} ${d})</small></div></div>`)});return out.slice(0,7).join("")}
 function gameOver(){sndMusic("final");const w=GS.players[GS.winner];const rows=GS.players.slice().sort((a,b)=>b.fame-a.fame).map(p=>`${p.name}: ${p.fame} de fama`).join(" · ");
  rcard(GS.winner===myIdx?"¡VICTORIA!":"FIN DE LA PARTIDA",w.name+" gana");
- const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`<div class="art">☠</div><div class="bot"><div class="tp">Fin de la partida</div><div class="nm">${esc(w.name)} es leyenda</div><div class="tx">${esc(rows)}</div></div>`;
+ const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML("fin","☠")}<div class="bot"><div class="tp">Fin de la partida</div><div class="nm">${esc(w.name)} es leyenda</div><div class="tx">${esc(rows)}</div></div>`;
  const tt=titlesHTML();const nodes=[t];if(tt){const d=document.createElement("div");d.className="logbook titles";d.innerHTML=`<h2>🏆 Títulos de la partida</h2>${tt}`;const row=document.createElement("div");row.className="endrow";row.append(t,d);nodes[0]=row}
- setTimeout(()=>showCov(nodes,GS.winner===myIdx?"Tu nombre se cantará en todas las tabernas del archipiélago.":`${w.name} ha llegado antes a ${GS.target} de fama.`,[["Nueva partida",()=>{location.href=location.pathname+(LOCAL?"?local":"")},true]]),2600)}
+ setTimeout(()=>showCov(nodes,GS.winner===myIdx?"Tu nombre se cantará en todas las tabernas del archipiélago.":(GS.byTime?`Se acabó el tiempo: ${w.name} tenía más fama (${w.fame}).`:`${w.name} ha llegado antes a ${GS.target} de fama.`),[["Nueva partida",()=>{location.href=location.pathname+(LOCAL?"?local":"")},true]]),2600)}
 
 // ---------- efectos ----------
 const fxs=[];function puff(x,y,z,col,sz,life){const m=new THREE.SpriteMaterial({map:cloudTex,color:C(col),transparent:true,opacity:.9,depthWrite:false});const s=new THREE.Sprite(m);s.position.set(x,y,z);s.scale.set(sz,sz,1);scene.add(s);fxs.push({s,t:0,life,sz})}
@@ -728,6 +747,13 @@ function fadeJump(ship,c){ship.userData.from=null;ship.userData.pos.set(c.x,0,c.
 
 // ---------- cámara en tercera persona, detrás del capitán ----------
 scene.add(camera);const camT=new THREE.Vector3(),camL=new THREE.Vector3();let introK=QS.has("nointro")?1:0;const CAMD=+(QS.get("camd")||6.5),CAMH=+(QS.get("camh")||2.7),CAMEL=+(QS.get("camel")||.3),CAMS=+(QS.get("cams")||2.2);
+// ---------- la cámara se eleva si una isla o el volcán se interpone ----------
+let camBoost=0,camBoostT=0,camChk=0;const camP=new THREE.Vector3(),camRC=new THREE.Raycaster(),camDir=new THREE.Vector3();
+function camBlocked(from,to){camDir.copy(to).sub(from);const L=camDir.length();if(L<.1)return false;camDir.divideScalar(L);camRC.set(from,camDir);camRC.far=L+2.5;const objs=[];
+ for(const k in islandMeshes){const c=CM[k];if(c&&(c.x-from.x)**2+(c.z-from.z)**2<110*110)objs.push(islandMeshes[k])}
+ if(window.VOLM&&(VOL.x-from.x)**2+(VOL.z-from.z)**2<140*140)objs.push(window.VOLM);
+ const vis=o=>{for(let q=o;q;q=q.parent)if(!q.visible)return false;return true};
+ return camRC.intersectObjects(objs,true).some(h=>vis(h.object))}
 function thirdPerson(dt){if(introK<1){introK=Math.min(1,introK+dt/7);if(introK>=1)introDone()}const e=1-Math.pow(1-introK,3);
  myShip.updateMatrixWorld();if(deckLow!==null){CLIPL[1].constant=deckLow+.35;CLIP.forEach((p,k)=>p.copy(CLIPL[k]).applyMatrix4(myShip.matrixWorld))}
  const dk=deckLow!==null?deckLow:CAPY;
@@ -736,7 +762,10 @@ function thirdPerson(dt){if(introK<1){introK=Math.min(1,introK+dt/7);if(introK>=
  if(spyOn){camT.set(ownCapX+.4,dk+CAPH*.93,0);myShip.localToWorld(camT);camera.position.copy(camT);const az=myShip.userData.heading+yaw,pp=Math.max(-.35,Math.min(.35,pitch));camL.set(camT.x+Math.cos(az)*Math.cos(pp)*100,camT.y+Math.sin(pp)*100,camT.z-Math.sin(az)*Math.cos(pp)*100);camera.lookAt(camL);cineCam(dt);return}
  camT.set(ownCapX,dk+CAMH,0);myShip.localToWorld(camT);
  const az=myShip.userData.heading+yaw+(1-e)*2.4;const el=THREE.MathUtils.lerp(1.05,Math.max(.06,Math.min(1.35,CAMEL-pitch*.9)),e);const D=THREE.MathUtils.lerp(260,CAMD+Math.abs(Math.sin(yaw))*12+(1-Math.cos(yaw))*3,e);const sx=Math.sin(az)*CAMS*e*Math.cos(yaw),sz=Math.cos(az)*CAMS*e*Math.cos(yaw);
- camera.position.set(camT.x-Math.cos(az)*Math.cos(el)*D+sx,camT.y+Math.sin(el)*D,camT.z+Math.sin(az)*Math.cos(el)*D+sz);if(camera.position.y<1.4)camera.position.y=1.4;
+ const camAt=e2=>camP.set(camT.x-Math.cos(az)*Math.cos(e2)*D+sx,camT.y+Math.sin(e2)*D,camT.z+Math.sin(az)*Math.cos(e2)*D+sz);
+ if(introK>=1&&++camChk%4===0){let b=0;for(let k=0;k<=10;k++){b=k*.1;if(el+b>1.4||!camBlocked(camT,camAt(el+b)))break}camBoostT=b}
+ camBoost+=(camBoostT-camBoost)*Math.min(1,dt*(camBoostT>camBoost?6:1.5));
+ camera.position.copy(camAt(Math.min(1.45,el+camBoost)));if(camera.position.y<1.4)camera.position.y=1.4;
  const ahead=spy?80:8;camL.set(camT.x+Math.cos(az)*ahead+sx,camT.y+(spy?0:.4)-(1-e)*2,camT.z-Math.sin(az)*ahead+sz);camera.lookAt(camL);cineCam(dt)}
 
 // ---------- sonido ambiente generado (por defecto solo en el anfitrión) ----------
@@ -890,7 +919,10 @@ function setShipModel(i){if(!GL)return;const s=SHIPS[i],p=GS.players[i],type=p.s
    s.children.forEach(o=>{if(o.isPointLight||o.isSprite)o.position.set(def.capx-.6,cy+2.2,0)})}
   if(!s.userData.flag){const fl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5,6,2),std(PCOL[i],{side:THREE.DoubleSide,emissive:C(PCOL[i]),emissiveIntensity:.25}));fl.userData.keep=true;s.add(fl);s.userData.flag=fl;
    anim.push(t=>{const fp=fl.geometry.attributes.position;for(let k=0;k<fp.count;k++){const xx=fp.getX(k)+1.3;fp.setZ(k,Math.sin(t*6-xx*3+i)*.15*xx)}fp.needsUpdate=true})}
-  s.userData.flag.position.set(-1,def.flagY,0);
+  {s.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(s.matrixWorld).invert();let best=null;const v=new THREE.Vector3();
+   c.traverse(o=>{if(!o.isMesh||!o.geometry.attributes.position)return;const P=o.geometry.attributes.position,M=new THREE.Matrix4().multiplyMatrices(inv,o.matrixWorld);const st=Math.max(1,Math.floor(P.count/4000));for(let k=0;k<P.count;k+=st){v.fromBufferAttribute(P,k).applyMatrix4(M);if(!best||v.y>best.y)best=v.clone()}});
+   const fl=s.userData.flag;fl.scale.setScalar(.8);fl.rotation.y=Math.PI;if(best)fl.position.set(best.x-1.05,best.y-.75,best.z);else fl.position.set(-1,def.flagY,0);
+   if(!fl.userData.pole){const pl=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.6,5),std("#3b2a1a"));pl.userData.keep=true;s.add(pl);fl.userData.pole=pl}fl.userData.pole.position.set(fl.position.x+1.05,fl.position.y-.1,fl.position.z)}
   get(CAPS[p.cap||0].n.toLowerCase(),cm=>{if(!cm||s.userData.model!==type)return;const cp=cm.clone();cp.scale.setScalar(CAPH);cp.position.set(def.capx,cy+.03,0);cp.rotation.y=Math.PI/2;cp.userData.keep=true;s.add(cp);s.userData.cap=cp})})}
 if(GL){SHIPS.forEach((s,i)=>setShipModel(i));
  const IMAP={selva:"isla-bosque",lino:"isla-lona",hierro:"isla-hierro",ron:"isla-ron",perlas:"isla-perlas"};
@@ -898,7 +930,7 @@ if(GL){SHIPS.forEach((s,i)=>setShipModel(i));
  ISL.forEach(o=>{const name=o.port!==undefined?"isla-ron":IMAP[o.t];get(name,m=>{if(!m)return;const G=islandMeshes[key(o.c)];const g=G.children[0];const R=g.userData.R;
   const c=m.clone();const sc=2.6*R/.98;c.scale.setScalar(sc);c.position.y=-(SINK[name]||.04)*HGT[name]*sc;G.add(c);g.visible=false;G.userData.glb=c;placeColonies();placePorts()})})}
 // volcán de Tripo (si carga, sustituye al generado)
-if(GL&&!QS.has("volproc"))get("isla-volcan",m=>{if(!m)return;const c=m.clone();const W=+(QS.get("volw")||78),HY=+(QS.get("volh")||1);c.scale.set(W,W*HY,W);c.position.set(VOL.x,-1.5,VOL.z);c.rotation.y=VOL.q*1.3;
+if(GL&&!QS.has("volproc"))get("isla-volcan",m=>{if(!m)return;const c=m.clone();const W=+(QS.get("volw")||54),HY=+(QS.get("volh")||1.45);c.scale.set(W,W*HY,W);window.VOLM=c;c.position.set(VOL.x,-1.5,VOL.z);c.rotation.y=VOL.q*1.3;
  c.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace("#include <fog_fragment>","#ifdef USE_FOG\nfloat vfd=fogDensity*.3;float vf=1.0-exp(-vfd*vfd*fogDepth*fogDepth);gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor*.8,vf);\n#endif")}}});
  scene.add(c);const V=window.VOLG;V.children.forEach(o=>{if(o.isMesh)o.visible=false});
  const bb=new THREE.Box3().setFromObject(c);V.position.y=bb.max.y-11.5*K+2});
@@ -977,7 +1009,7 @@ function hostPlace(i,m,auto){const G=H.G;if(!G||G.phase!=="place"||draftWho(G)!=
  else{if(!terrOpts(G,i).includes(m.k))return;const T=G.terr[m.k];T[T.indexOf(-1)]=i;p.placed=2;const mats=new Set([TMAT[o.t]]);neighbors(o.c).forEach(n=>{const x=ISLMAP[key(n)];if(x&&x.port===undefined)mats.add(TMAT[x.t])});mats.forEach(mm=>addStock(p,mm,1));p.fame=famOf(G,i);
   txt=`${p.name} planta su primera bandera${auto?" (se le acabó el tiempo)":""} y se lleva ${[...mats].map(mm=>MATS.find(x=>x[0]===mm)[1].toLowerCase()).join(", ")}.`}
  Net.toAll({t:"placed",i,txt});G.draft.step++;hostDraftNext()}
-function hostDraftNext(){const G=H.G;clearTimeout(H.dtid);if(G.draft.step>=G.draft.order.length){G.phase="orders";G.draft=null;G.players.forEach(p=>{if(!p.placed)p.placed=2});Net.toAll({t:"state",G});hostArmTimer(12);return}hostDraftArm()}
+function hostDraftNext(){const G=H.G;clearTimeout(H.dtid);if(G.draft.step>=G.draft.order.length){G.phase="orders";G.draft=null;G.t0=Date.now();G.players.forEach(p=>{if(!p.placed)p.placed=2});Net.toAll({t:"state",G});hostArmTimer(12);return}hostDraftArm()}
 // ---------- puertos en 3D: muelle y bandera del dueño ----------
 function placePorts(){PORTS.forEach(o=>{const G=islandMeshes[key(o.c)];if(!G||G.userData.portOwner===o.home)return;if(GL&&!G.userData.glb)return;G.userData.portOwner=o.home;if(G.userData.portDeco){scene.remove(G.userData.portDeco)}if(o.home===undefined)return;
  const grp=new THREE.Group();scene.add(grp);G.userData.portDeco=grp;const c=CM[key(o.c)];const toC=new THREE.Vector3(-c.x,0,-c.z).normalize();const R=((G.children[0].userData.R)||1)*K;
@@ -995,7 +1027,7 @@ function placeInfo(){if(GS.phase!=="place"||!GS.draft){plb.hidden=true;return}co
 setInterval(placeInfo,500);
 function placeOpts(){if(GS.phase!=="place"||!GS.draft||GS.draft.order[GS.draft.step]!==myIdx)return[];return GS.draft.step<GS.players.length?PORTS.filter(o=>GS.portOwner[o.port]<0):terrOpts(GS,myIdx).map(k=>ISLMAP[k])}
 let seenBak=null;
-function showPlace(){placeT0=Date.now();wasPlace=true;if(!seenBak){seenBak=new Set(seen);CELLS.forEach(c=>{if(c!==VOL)seen.add(key(c))})}PORTS.forEach(o=>reveal(o.c,2));myShip.visible=!!me().placed;updateVisibility();toggleMap(true);drawMap();placeInfo();showDice()}
+function showPlace(){placeT0=Date.now();wasPlace=true;if(!seenBak){seenBak=new Set(seen);CELLS.forEach(c=>seen.add(key(c)))}PORTS.forEach(o=>reveal(o.c,2));myShip.visible=!!me().placed;updateVisibility();toggleMap(true);drawMap();placeInfo();showDice()}
 function endPlace(){wasPlace=false;plb.hidden=true;diceEl.hidden=true;if(seenBak){seen.clear();seenBak.forEach(k=>seen.add(k));seenBak=null}myShip.visible=true;snapShips();reveal(cellOf(me().home),1);toggleMap(false);armDeadline(GS.timer?GS.timer*60+12:0);sndHit("drum");
  note(`¡Todos en su puerto! Empieza la ronda 1. Tu primer territorio ya produce. Abre Acciones (A) y traza tu ruta en el mapa (M).`,10)}
 
@@ -1170,6 +1202,16 @@ async function duel(caps,crew,o){const {A,Bs,side,fwd,mid,deck,won,tie}=o;const 
  await fwait(1700);const i=anim.indexOf(camF);if(i>=0)anim.splice(i,1);crewSt.forEach(cs=>cs&&cs.c.m.position.set(0,-50,0))}
 
 // ---------- DESEMBARCO: un bote lleva a la tripulación a la playa, luchan y plantan la bandera ----------
+// barco de desembarco: uno de los barcos modelados (escolta del jugador o goleta), con la bandera en su mástil
+async function landingBoat(i){const p=GS.players[i]||{};const t=(FL(p).find(x=>x!=="brulote"))||"goleta";const D=ESCDEF[t]||ESCDEF.goleta;
+ const m=GL?await new Promise(r=>get(D.f,r)):null;if(!m){const b=rowBoat(PCOL[i]);b.scale.setScalar(1.25);return b}
+ const g=new THREE.Group();const c=m.clone();const bb=new THREE.Box3().setFromObject(c);const L=Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z)||1;const sc=9/L;c.scale.setScalar(sc);c.position.y=-bb.min.y*sc-.9;g.add(c);g.userData.glb=c;
+ g.updateMatrixWorld(true);const B=new THREE.Box3().setFromObject(c);
+ // altura de la cubierta: rayo hacia abajo en el centro del barco
+ const rc=new THREE.Raycaster(new THREE.Vector3(.6,B.max.y+5,-.8),new THREE.Vector3(0,-1,0));const hs=rc.intersectObject(c,true);const lim=B.min.y+(B.max.y-B.min.y)*.4;const dh=hs.find(h=>h.point.y<lim);const deck=dh?dh.point.y:B.min.y+(B.max.y-B.min.y)*.22;
+ g.userData.seat={y:deck+.03,z0:-2.4,dz:1.2};
+ const fl=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1,6,2),std(PCOL[i],{side:THREE.DoubleSide,emissive:C(PCOL[i]),emissiveIntensity:.4}));fl.position.set(0,B.max.y-.7,-.2);fl.rotation.y=Math.PI/2;g.add(fl);
+ g.userData.oars=[];return g}
 function rowBoat(col){const g=new THREE.Group();const wood=std("#6b4526",{roughness:.9}),dark=std("#3e2614",{roughness:.95});
  const hull=new THREE.Mesh(new THREE.BoxGeometry(1.7,.6,3.4),wood);hull.position.set(0,.3,-.2);g.add(hull);
  const bow=new THREE.Mesh(new THREE.ConeGeometry(1.2,1.6,4),wood);bow.rotation.set(Math.PI/2,0,Math.PI/4);bow.scale.set(1,1,.42);bow.position.set(0,.36,2.3);g.add(bow);
@@ -1194,9 +1236,9 @@ async function fxLanding(o){// o: {at, atk, def(-1 si no hay dueño), win (ganan
  const P=shorePath(k,isl,from);const perp=new THREE.Vector3(-P.d.z,0,P.d.x);
  const n=o.n||3;const atk=await Promise.all(Array.from({length:n},(_,q)=>animCrew(q)));if(atk.some(a=>!a)){atk.forEach(a=>a&&a.dispose());return}
  const defs=o.def>=0?await Promise.all([1,2].map(q=>animCrew(q))):[];
- const boat=rowBoat(PCOL[o.atk]);boat.scale.setScalar(1.25);scene.add(boat);const b0=from.clone().addScaledVector(P.d,-6).setY(0);const b1=P.water.clone();boat.position.copy(b0);faceTo(boat,b0,b1);
+ const boat=await landingBoat(o.atk);scene.add(boat);const b0=from.clone().addScaledVector(P.d,-6).setY(0);const b1=P.water.clone().addScaledVector(P.d,boat.userData.glb?2.6:0);boat.position.copy(b0);faceTo(boat,b0,b1);
  atk.forEach((a,q)=>{scene.add(a.m);a.play("idle");a.speed(.9+q*.1)});
- const seat=q=>{boat.updateMatrixWorld();return boat.localToWorld(new THREE.Vector3((q%2?-.35:.35),.6,-1.2+q*1.1))};
+ const seat=q=>{boat.updateMatrixWorld();const S=boat.userData.seat;return boat.localToWorld(S?new THREE.Vector3((q%2?-.55:.55),S.y,S.z0+q*S.dz):new THREE.Vector3((q%2?-.35:.35),.6,-1.2+q*1.1))};
  // los defensores esperan arriba
  const top=P.pts[P.pts.length-1];defs.forEach((d,q)=>{if(!d)return;scene.add(d.m);d.m.position.copy(top).addScaledVector(perp,(q?1:-1)*1.4);faceTo(d.m,d.m.position,P.pts[0]);d.play("idle")});
  // cámara de costado siguiendo al bote

@@ -1,3 +1,6 @@
+// ilustraciones de las cartas de acciones y sucesos (renders de los modelos 3D)
+const ARTK={colonizar:"colonizar",fuerte:"fuerte",tripulante:"tripulante",canon:"canon",galeon:"galeon",escolta:"escolta",almacen:"almacen",muelle:"muelle",torre:"torre",patrulla:"patrulla",bergantin:"bergantin",goleta:"goleta",mercante:"mercante",brulote:"brulote",asalto:"asalto",emboscada:"asalto",mision:"mision",cofre:"cofre",tesoro:"tesoro",volcan:"volcan",tormenta:"tormenta",kraken:"kraken",trato:"trato",fin:"fin"};
+const artHTML=(k,fb)=>`<div class="art">${fb||""}${ARTK[k]?`<img alt="" src="cartas/arte/c-${ARTK[k]}.jpg" onerror="this.remove()">`:""}</div>`;
 function cardEl(id,big){const c=CBY[id];const e=document.createElement("div");e.className="fc"+(big?" big":"");e.dataset.t=c.t;e.tabIndex=0;
  e.innerHTML=(c.t==="respuesta"?"":`<div class="cost">${costTxt(CARDCOST(id,me()))}</div>`)+`<div class="art">${c.n.replace("¡","")[0]}<img alt="" src="${c.id==="remiendo-rapido"?"https://th.bing.com/th/id/OIG2.wnWgr_tqxa8iAUwtXqgh?w=400&pid=ImgGn":`cartas/arte/${c.id}.jpg`}" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='cartas/arte/${c.id}.jpg'}else this.remove()"></div><div class="bot"><div class="tp">${TLABEL[c.t]}</div><div class="nm">${c.n}</div><div class="tx">${c.x}</div></div>`;return e}
 const LEGART={canon:"OIG2.9dJHDkyKU_1sUTxNDHVj",mapa:"OIG3.nxPd2fnlWVnmvUlI2Ng2",fantasma:"OIG1.gedbFYru5eAddTndSbKf",patente:"OIG2.jLZ9_V0DlsMVXxSgI1mL",baraja:"OIG2.eTW0wA269sOmc98_4XIZ",bodega:"OIG4.UrR2xZU0SCDhBwSqYmD8"};
@@ -160,7 +163,7 @@ async function hostResolve(){const G=H.G;if(G.phase!=="orders")return;G.phase="r
   if(ok){p.misOk=true;p.bonus=(p.bonus||0)+2;E(i,{k:"mission",txt:`¡Misión secreta cumplida: ${MIS[p.mis].n}! ${MIS[p.mis].x} +2 de fama para siempre.`});E(-1,{k:"note",txt:`${p.name} ha cumplido su misión secreta (${MIS[p.mis].n}): +2 de fama.`})}});
  P.forEach((p,i)=>p.fame=famOf(G,i)); {const live=P.filter(p=>!p.gone).sort((a,b)=>b.fame-a.fame);G.wanted=live.length>1&&live[0].fame>=3&&live[0].fame>live[1].fame?live[0].i:-1}
  if(G.storm){const DIR=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];if(Math.random()<.3)G.storm.d=(G.storm.d+(Math.random()<.5?1:5))%6;let moved=false;for(let t=0;t<6&&!moved;t++){const d=DIR[G.storm.d];const n=[G.storm.c[0]+d[0],G.storm.c[1]+d[1]];const nc=cellOf(n);if(nc&&cdist(nc,VOL)>=1){G.storm.c=n;moved=true}else G.storm.d=(G.storm.d+2+Math.floor(Math.random()*3))%6}}
- P.forEach(p=>{if(!p.gone&&repOf(p)==="mercader")p.rum+=1});const top=P.filter(p=>!p.gone).sort((a,b)=>b.fame-a.fame||b.rum-a.rum);if(top.length&&top[0].fame>=G.target){G.winner=top[0].i;G.phase="over"}
+ P.forEach(p=>{if(!p.gone&&repOf(p)==="mercader")p.rum+=1});const top=P.filter(p=>!p.gone).sort((a,b)=>b.fame-a.fame||b.rum-a.rum);const elM=G.t0?(Date.now()-G.t0)/60000:0,durM=G.dur||0;if(top.length&&((top[0].fame>=G.target&&(!durM||elM>=durM*.6))||(durM&&elM>=durM))){G.winner=top[0].i;G.phase="over";G.byTime=!(top[0].fame>=G.target)}
  else{// sucesos del mar que afectan a todos
   if(G.round>=(QS.has("ev")?1:2)&&Math.random()<(QS.has("ev")?1:.17)){const live=P.filter(p=>!p.gone);let k=QS.get("evk")!=null?+QS.get("evk"):Math.floor(Math.random()*8);if(k===5&&QS.get("evk")==null)k=[0,1,3][Math.floor(Math.random()*3)];let n,txt,lead_i,vic_i;
    if(k===4){const lead=live.slice().sort((a,b)=>b.fame-a.fame)[0];lead_i=lead.i;const lost=steal(lead,null,2);lead.cell=lead.home.slice();n="El kraken despierta";txt=`Un kraken hambriento ataca al barco con más fama: ${lead.name} pierde ${mname(lost)} y vuelve a puerto.`}
@@ -189,7 +192,7 @@ function worldMsg(m){
  if(m.t==="msg"){note(m.txt,8);sndHit("chest");return}
  if(m.t==="placed"){note(m.txt,6);sndHit("chest");return}
  if(m.t==="offer"){const o=m.o,q=GS.players[o.from];const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";
-  t.innerHTML=`<div class="art">🤝</div><div class="bot"><div class="tp">Trato</div><div class="nm">${esc(q.name)} te propone</div><div class="tx">${o.kind==="pact"?"Un pacto de no agresión durante 3 rondas: no habrá abordajes entre vosotros ni saqueos en vuestras islas. Si uno asalta al otro, pierde 1 de fama.":`Te da ${costTxt(o.give)} a cambio de ${costTxt(o.get)}.`}</div></div>`;
+  t.innerHTML=`${artHTML("trato","🤝")}<div class="bot"><div class="tp">Trato</div><div class="nm">${esc(q.name)} te propone</div><div class="tx">${o.kind==="pact"?"Un pacto de no agresión durante 3 rondas: no habrá abordajes entre vosotros ni saqueos en vuestras islas. Si uno asalta al otro, pierde 1 de fama.":`Te da ${costTxt(o.give)} a cambio de ${costTxt(o.get)}.`}</div></div>`;
   sndHit("chest");showCov([t],"",[["Rechazar",()=>{hideCov();Net.toHost({t:"offerAns",id:o.id,ok:false})}],["Aceptar",()=>{hideCov();Net.toHost({t:"offerAns",id:o.id,ok:true})},true]],45000);return}
  if(m.t==="offerSent"){note(`Propuesta enviada a ${esc(GS.players[m.o.to].name)}. Esperando su respuesta…`,6);return}
  if(m.t==="offerRes"){const o=m.o,other=GS.players[o.from===myIdx?o.to:o.from].name;note(m.ok?(o.kind==="pact"?`¡Pacto sellado con ${esc(other)} durante 3 rondas!`:`Trato hecho con ${esc(other)}.`):`${esc(other)} no acepta el trato.${m.why?" "+m.why:""}`,7);if(typeof renderActs==="function"&&$("actp").classList.contains("on"))renderActs();renderRes&&renderRes();return}if(m.t==="ready"){m.ready.forEach((r,i)=>GS.players[i].ready=r);if(m.gone)m.gone.forEach((g,i)=>GS.players[i].gone=g);if(GS.phase==="orders")renderScore();return}
@@ -212,10 +215,10 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
  const fns=[];
  pre.forEach(e=>fns.push(async nx=>{if(e.card==="kraken-a-sueldo"&&e.to===myIdx&&e.txt.startsWith("¡El kraken"))await fxKraken(myIdx).catch(()=>{});const b=cardEl(e.card,true);b.classList.add("flip");showCov([b],e.txt,[["Seguir",()=>{hideCov();if(e.reveal)e.reveal.forEach(([c,r])=>reveal(cellOf(c),r));setTimeout(nx,300)},true]],7000)}));
  mine.filter(e=>e.k==="assault").forEach(e=>fns.push(nx=>{fxAssault(e).catch(()=>{}).then(()=>{rcard(e.def?(e.win?"DEFENSA":"TERRITORIO PERDIDO"):(e.win?"CONQUISTA":"ASALTO FALLIDO"),"Asalto");if(e.win&&!e.def){const k2=key(cellOf(e.at));const T=GS.terr[k2];if(T){const s2=T.findIndex(o=>o>=0&&o!==myIdx);if(s2>=0)T[s2]=myIdx;placeColonies()}}
-  setTimeout(()=>{const t=document.createElement("div");t.className="fc big";t.dataset.t=e.win?"ventaja":"sabotaje";t.innerHTML=`<div class="art">⚔</div><div class="bot"><div class="tp">Asalto</div><div class="nm">${e.def?(e.win?"¡Resistís!":"Te han conquistado"):(e.win?"¡Territorio conquistado!":"Os rechazan")}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)},1500)})}));
+  setTimeout(()=>{const t=document.createElement("div");t.className="fc big";t.dataset.t=e.win?"ventaja":"sabotaje";t.innerHTML=`${artHTML("asalto","⚔")}<div class="bot"><div class="tp">Asalto</div><div class="nm">${e.def?(e.win?"¡Resistís!":"Te han conquistado"):(e.win?"¡Territorio conquistado!":"Os rechazan")}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)},1500)})}));
  const blds=mine.filter(e=>e.k==="build");if(blds.length)fns.push(async nx=>{const col=blds.find(e=>e.b==="colonizar"&&e.at);if(col&&typeof fxLanding==="function"){try{await fxLanding({at:col.at,atk:myIdx,def:-1,win:true,n:2})}catch(err){console.warn(err)}cineOff()}
-  const B={colonizar:["⚑","Nuevo territorio"],fuerte:["🏰","Fuerte"],tripulante:["👥","Tripulación"],canon:["💣","Cañón"],galeon:["🚢","Galeón"],escolta:["⛵","Escolta"],almacen:["📦","Almacén"],muelle:["⚓","Muelle"],torre:["🗼","Torre vigía"],patrulla:["🛡","Patrulla"]};
-  const nodes=blds.map(e=>{const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`<div class="art">${B[e.b][0]}</div><div class="bot"><div class="tp">Construcción</div><div class="nm">${B[e.b][1]}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");return t});
+  const B={colonizar:["⚑","Nuevo territorio"],fuerte:["🏰","Fuerte"],tripulante:["👥","Tripulación"],canon:["💣","Cañón"],galeon:["🚢","Galeón"],escolta:["⛵","Escolta"],almacen:["📦","Almacén"],muelle:["⚓","Muelle"],torre:["🗼","Torre vigía"],patrulla:["🛡","Patrulla"]};FLS.forEach(t=>B[t]=[ACTS[t].i,ACTS[t].n]);
+  const nodes=blds.map(e=>{const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML(e.b,(B[e.b]||["⚒"])[0])}<div class="bot"><div class="tp">Construcción</div><div class="nm">${(B[e.b]||["",ACTS[e.b]?ACTS[e.b].n:"Construcción"])[1]}</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");return t});
   if(blds.some(e=>e.b==="galeon"))setTimeout(()=>{GS.players[myIdx].ship="galeon";setShipModel(myIdx)},400);
   sndHit("chest");showCov(nodes.slice(0,3),"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)});
  fns.push(nx=>{rcard("¡LEVEN ANCLAS!","Ronda "+GS.round);setTimeout(nx,900)});
@@ -226,9 +229,9 @@ function playResolve(m,done){const mine=m.ev.filter(e=>e.to===-1||e.to===myIdx);
     note(e.txt,9);setTimeout(()=>{if(e.lost)fadeJump(myShip,cellOf(m.G.players[myIdx].home));nx()},1600)})}else nx()}});
  fns.push(nx=>{// barcos enviados a puerto vuelven allí
   m.sent.forEach((s,i)=>{if(s){const h=cellOf(m.G.players[i].home);fadeJump(SHIPS[i],h)}});setTimeout(nx,m.sent.some(Boolean)?900:10)});
- mine.filter(e=>e.k==="mission").forEach(e=>fns.push(nx=>{sndHit("treasure");const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`<div class="art">🗝</div><div class="bot"><div class="tp">Misión secreta</div><div class="nm">¡Cumplida!</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)}));
+ mine.filter(e=>e.k==="mission").forEach(e=>fns.push(nx=>{sndHit("treasure");const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML("mision","🗝")}<div class="bot"><div class="tp">Misión secreta</div><div class="nm">¡Cumplida!</div><div class="tx">${e.txt}</div></div>`;t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],8000)}));
  mine.filter(e=>["chest","treasure","erupt","sea","storm"].includes(e.k)).forEach(e=>fns.push(async nx=>{if(e.k==="storm"){e.n="¡Atrapados en la tormenta!";await fxSea({kind:5}).catch(()=>{})}if(e.k==="sea")await fxSea(e).catch(()=>{});if(e.k==="erupt")await fxErupt().catch(()=>{});sndHit(e.k);if(e.k==="treasure")rcard("TESORO",e.txt.includes("mapa")?"+1 de fama":"+3 de fama");if(e.k==="sea"||e.k==="storm")rcard(e.k==="storm"?"TORMENTA":"SUCESO DEL MAR",e.n);
-  const t=document.createElement("div");t.className="fc big";t.dataset.t=e.k==="sea"||e.k==="storm"?"sigilo":e.k==="chest"?"ventaja":e.k==="treasure"?"ventaja":"sabotaje";t.innerHTML=`<div class="art">${e.k==="sea"||e.k==="storm"?"≋":e.k==="erupt"?"🌋":e.k==="treasure"?"✦":"⚿"}</div><div class="bot"><div class="tp">${e.k==="sea"||e.k==="storm"?"Suceso del mar":e.k==="chest"?"Cofre":e.k==="treasure"?"Tesoro":"Volcán"}</div><div class="nm">${e.k==="sea"||e.k==="storm"?e.n:e.k==="chest"?"Exploración":e.k==="treasure"?(e.txt.includes("mapa")?"Tesoro enterrado":"El tesoro del volcán"):"¡Erupción!"}</div><div class="tx">${e.txt}</div></div>`;
+  const t=document.createElement("div");t.className="fc big";t.dataset.t=e.k==="sea"||e.k==="storm"?"sigilo":e.k==="chest"?"ventaja":e.k==="treasure"?"ventaja":"sabotaje";t.innerHTML=`${artHTML(e.k==="storm"?"tormenta":e.k==="sea"?(/kraken/i.test(e.n||"")?"kraken":/ceniza|volc/i.test(e.n||"")?"volcan":/ron/i.test(e.n||"")?"trato":"tormenta"):e.k==="erupt"?"volcan":e.k==="treasure"?(e.txt.includes("mapa")?"mision":"tesoro"):"cofre",e.k==="sea"||e.k==="storm"?"≋":e.k==="erupt"?"🌋":e.k==="treasure"?"✦":"⚿")}<div class="bot"><div class="tp">${e.k==="sea"||e.k==="storm"?"Suceso del mar":e.k==="chest"?"Cofre":e.k==="treasure"?"Tesoro":"Volcán"}</div><div class="nm">${e.k==="sea"||e.k==="storm"?e.n:e.k==="chest"?"Exploración":e.k==="treasure"?(e.txt.includes("mapa")?"Tesoro enterrado":"El tesoro del volcán"):"¡Erupción!"}</div><div class="tx">${e.txt}</div></div>`;
   t.classList.add("flip");showCov([t],"",[["Seguir",()=>{hideCov();setTimeout(nx,300)},true]],7000)}));
  mine.filter(e=>e.k==="rumor").forEach(e=>rumors[e.who]={at:e.at,round:m.G.round});
  fns.push(nx=>{logRound(m,mine);showLog(false,()=>setTimeout(nx,200))});
@@ -242,14 +245,17 @@ function arrivalNote(){const c=cellOf(me().cell);const vis=GS.players.filter((p,
  if(vis.length)note(`Velas a la vista: ${vis.map(p=>p.name).join(", ")}. Si acabáis en la misma casilla habrá abordaje.`,9);
  else if(cdist(c,VOL)<=1)note("El volcán ruge a vuestro lado. El tesoro está cerca, y el peligro también.",8);
  
- else note("Abre Acciones para colonizar o construir, y el mapa (M) para trazar la ruta.",7)}
+ else note("Abre Acciones para colonizar o construir, y el mapa (M) para trazar la ruta.",7);
+ // primera vez junto a una isla con territorio libre: explicación con su carta
+ try{const isl=neighbors(c).map(n=>ISLMAP[key(n)]).find(o=>o&&o.port===undefined&&(GS.terr[key(o.c)]||[]).includes(-1));let seenT=false;try{seenT=localStorage.getItem("arch_tut_isla")==="1"}catch(e){}
+  if(isl&&!seenT&&GS.phase==="orders"){try{localStorage.setItem("arch_tut_isla","1")}catch(e){}const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML("colonizar","⚑")}<div class="bot"><div class="tp">Estás junto a una isla</div><div class="nm">${INAME[isl.t]}</div><div class="tx">Abre <b>Acciones</b> y elige <b>Colonizar territorio</b>: +1 de fama mientras sea tuyo y 1 material de la isla cada ronda. Luego podrás fortificarlo o construir en él.</div></div>`;t.classList.add("flip");setTimeout(()=>showCov([t],"",[["Abrir Acciones",()=>{hideCov();openActs()},true],["Luego",hideCov]]),900)}}catch(e){console.warn(e)}}
 const TITLES=[["bw","⚔","Terror de los mares","abordajes ganados"],["aw","🏰","Conquistador","asaltos ganados"],["ron","🍾","Rey del ron","barriles gastados en abordajes"],["tr","🐍","Traidor de la Cofradía","pactos rotos"],["com","⚖","Mercader de seda","cambios en el mercado"],["cof","⚿","Cazatesoros","cofres abiertos"],["saq","💰","Saqueador","almacenes saqueados"],["apu","🎲","Tahúr de taberna","apuestas acertadas"],["reh","⛓","Carcelero","rehenes capturados"],["bl","🐟","Pez de agua dulce","abordajes perdidos"]];
 function titlesHTML(){const P=GS.players.filter(p=>!p.gone);const out=[];TITLES.forEach(([k,ic,n,d])=>{const v=P.map(p=>(p.st&&p.st[k])||0);const mx=Math.max(0,...v);if(mx<1)return;const who=P.filter((p,j)=>v[j]===mx).map(p=>`<b style="color:${PCOL[p.i]}">${esc(p.name)}</b>`).join(" y ");out.push(`<div class="tl"><span>${ic}</span><div><i>${n}</i> ${who} <small>(${mx} ${d})</small></div></div>`)});return out.slice(0,7).join("")}
 function gameOver(){sndMusic("final");const w=GS.players[GS.winner];const rows=GS.players.slice().sort((a,b)=>b.fame-a.fame).map(p=>`${p.name}: ${p.fame} de fama`).join(" · ");
  rcard(GS.winner===myIdx?"¡VICTORIA!":"FIN DE LA PARTIDA",w.name+" gana");
- const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`<div class="art">☠</div><div class="bot"><div class="tp">Fin de la partida</div><div class="nm">${esc(w.name)} es leyenda</div><div class="tx">${esc(rows)}</div></div>`;
+ const t=document.createElement("div");t.className="fc big";t.dataset.t="ventaja";t.innerHTML=`${artHTML("fin","☠")}<div class="bot"><div class="tp">Fin de la partida</div><div class="nm">${esc(w.name)} es leyenda</div><div class="tx">${esc(rows)}</div></div>`;
  const tt=titlesHTML();const nodes=[t];if(tt){const d=document.createElement("div");d.className="logbook titles";d.innerHTML=`<h2>🏆 Títulos de la partida</h2>${tt}`;const row=document.createElement("div");row.className="endrow";row.append(t,d);nodes[0]=row}
- setTimeout(()=>showCov(nodes,GS.winner===myIdx?"Tu nombre se cantará en todas las tabernas del archipiélago.":`${w.name} ha llegado antes a ${GS.target} de fama.`,[["Nueva partida",()=>{location.href=location.pathname+(LOCAL?"?local":"")},true]]),2600)}
+ setTimeout(()=>showCov(nodes,GS.winner===myIdx?"Tu nombre se cantará en todas las tabernas del archipiélago.":(GS.byTime?`Se acabó el tiempo: ${w.name} tenía más fama (${w.fame}).`:`${w.name} ha llegado antes a ${GS.target} de fama.`),[["Nueva partida",()=>{location.href=location.pathname+(LOCAL?"?local":"")},true]]),2600)}
 
 // ---------- efectos ----------
 const fxs=[];function puff(x,y,z,col,sz,life){const m=new THREE.SpriteMaterial({map:cloudTex,color:C(col),transparent:true,opacity:.9,depthWrite:false});const s=new THREE.Sprite(m);s.position.set(x,y,z);s.scale.set(sz,sz,1);scene.add(s);fxs.push({s,t:0,life,sz})}
@@ -260,6 +266,13 @@ function fadeJump(ship,c){ship.userData.from=null;ship.userData.pos.set(c.x,0,c.
 
 // ---------- cámara en tercera persona, detrás del capitán ----------
 scene.add(camera);const camT=new THREE.Vector3(),camL=new THREE.Vector3();let introK=QS.has("nointro")?1:0;const CAMD=+(QS.get("camd")||6.5),CAMH=+(QS.get("camh")||2.7),CAMEL=+(QS.get("camel")||.3),CAMS=+(QS.get("cams")||2.2);
+// ---------- la cámara se eleva si una isla o el volcán se interpone ----------
+let camBoost=0,camBoostT=0,camChk=0;const camP=new THREE.Vector3(),camRC=new THREE.Raycaster(),camDir=new THREE.Vector3();
+function camBlocked(from,to){camDir.copy(to).sub(from);const L=camDir.length();if(L<.1)return false;camDir.divideScalar(L);camRC.set(from,camDir);camRC.far=L+2.5;const objs=[];
+ for(const k in islandMeshes){const c=CM[k];if(c&&(c.x-from.x)**2+(c.z-from.z)**2<110*110)objs.push(islandMeshes[k])}
+ if(window.VOLM&&(VOL.x-from.x)**2+(VOL.z-from.z)**2<140*140)objs.push(window.VOLM);
+ const vis=o=>{for(let q=o;q;q=q.parent)if(!q.visible)return false;return true};
+ return camRC.intersectObjects(objs,true).some(h=>vis(h.object))}
 function thirdPerson(dt){if(introK<1){introK=Math.min(1,introK+dt/7);if(introK>=1)introDone()}const e=1-Math.pow(1-introK,3);
  myShip.updateMatrixWorld();if(deckLow!==null){CLIPL[1].constant=deckLow+.35;CLIP.forEach((p,k)=>p.copy(CLIPL[k]).applyMatrix4(myShip.matrixWorld))}
  const dk=deckLow!==null?deckLow:CAPY;
@@ -268,7 +281,10 @@ function thirdPerson(dt){if(introK<1){introK=Math.min(1,introK+dt/7);if(introK>=
  if(spyOn){camT.set(ownCapX+.4,dk+CAPH*.93,0);myShip.localToWorld(camT);camera.position.copy(camT);const az=myShip.userData.heading+yaw,pp=Math.max(-.35,Math.min(.35,pitch));camL.set(camT.x+Math.cos(az)*Math.cos(pp)*100,camT.y+Math.sin(pp)*100,camT.z-Math.sin(az)*Math.cos(pp)*100);camera.lookAt(camL);cineCam(dt);return}
  camT.set(ownCapX,dk+CAMH,0);myShip.localToWorld(camT);
  const az=myShip.userData.heading+yaw+(1-e)*2.4;const el=THREE.MathUtils.lerp(1.05,Math.max(.06,Math.min(1.35,CAMEL-pitch*.9)),e);const D=THREE.MathUtils.lerp(260,CAMD+Math.abs(Math.sin(yaw))*12+(1-Math.cos(yaw))*3,e);const sx=Math.sin(az)*CAMS*e*Math.cos(yaw),sz=Math.cos(az)*CAMS*e*Math.cos(yaw);
- camera.position.set(camT.x-Math.cos(az)*Math.cos(el)*D+sx,camT.y+Math.sin(el)*D,camT.z+Math.sin(az)*Math.cos(el)*D+sz);if(camera.position.y<1.4)camera.position.y=1.4;
+ const camAt=e2=>camP.set(camT.x-Math.cos(az)*Math.cos(e2)*D+sx,camT.y+Math.sin(e2)*D,camT.z+Math.sin(az)*Math.cos(e2)*D+sz);
+ if(introK>=1&&++camChk%4===0){let b=0;for(let k=0;k<=10;k++){b=k*.1;if(el+b>1.4||!camBlocked(camT,camAt(el+b)))break}camBoostT=b}
+ camBoost+=(camBoostT-camBoost)*Math.min(1,dt*(camBoostT>camBoost?6:1.5));
+ camera.position.copy(camAt(Math.min(1.45,el+camBoost)));if(camera.position.y<1.4)camera.position.y=1.4;
  const ahead=spy?80:8;camL.set(camT.x+Math.cos(az)*ahead+sx,camT.y+(spy?0:.4)-(1-e)*2,camT.z-Math.sin(az)*ahead+sz);camera.lookAt(camL);cineCam(dt)}
 
 // ---------- sonido ambiente generado (por defecto solo en el anfitrión) ----------
@@ -422,7 +438,10 @@ function setShipModel(i){if(!GL)return;const s=SHIPS[i],p=GS.players[i],type=p.s
    s.children.forEach(o=>{if(o.isPointLight||o.isSprite)o.position.set(def.capx-.6,cy+2.2,0)})}
   if(!s.userData.flag){const fl=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5,6,2),std(PCOL[i],{side:THREE.DoubleSide,emissive:C(PCOL[i]),emissiveIntensity:.25}));fl.userData.keep=true;s.add(fl);s.userData.flag=fl;
    anim.push(t=>{const fp=fl.geometry.attributes.position;for(let k=0;k<fp.count;k++){const xx=fp.getX(k)+1.3;fp.setZ(k,Math.sin(t*6-xx*3+i)*.15*xx)}fp.needsUpdate=true})}
-  s.userData.flag.position.set(-1,def.flagY,0);
+  {s.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(s.matrixWorld).invert();let best=null;const v=new THREE.Vector3();
+   c.traverse(o=>{if(!o.isMesh||!o.geometry.attributes.position)return;const P=o.geometry.attributes.position,M=new THREE.Matrix4().multiplyMatrices(inv,o.matrixWorld);const st=Math.max(1,Math.floor(P.count/4000));for(let k=0;k<P.count;k+=st){v.fromBufferAttribute(P,k).applyMatrix4(M);if(!best||v.y>best.y)best=v.clone()}});
+   const fl=s.userData.flag;fl.scale.setScalar(.8);fl.rotation.y=Math.PI;if(best)fl.position.set(best.x-1.05,best.y-.75,best.z);else fl.position.set(-1,def.flagY,0);
+   if(!fl.userData.pole){const pl=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.6,5),std("#3b2a1a"));pl.userData.keep=true;s.add(pl);fl.userData.pole=pl}fl.userData.pole.position.set(fl.position.x+1.05,fl.position.y-.1,fl.position.z)}
   get(CAPS[p.cap||0].n.toLowerCase(),cm=>{if(!cm||s.userData.model!==type)return;const cp=cm.clone();cp.scale.setScalar(CAPH);cp.position.set(def.capx,cy+.03,0);cp.rotation.y=Math.PI/2;cp.userData.keep=true;s.add(cp);s.userData.cap=cp})})}
 if(GL){SHIPS.forEach((s,i)=>setShipModel(i));
  const IMAP={selva:"isla-bosque",lino:"isla-lona",hierro:"isla-hierro",ron:"isla-ron",perlas:"isla-perlas"};
@@ -430,7 +449,7 @@ if(GL){SHIPS.forEach((s,i)=>setShipModel(i));
  ISL.forEach(o=>{const name=o.port!==undefined?"isla-ron":IMAP[o.t];get(name,m=>{if(!m)return;const G=islandMeshes[key(o.c)];const g=G.children[0];const R=g.userData.R;
   const c=m.clone();const sc=2.6*R/.98;c.scale.setScalar(sc);c.position.y=-(SINK[name]||.04)*HGT[name]*sc;G.add(c);g.visible=false;G.userData.glb=c;placeColonies();placePorts()})})}
 // volcán de Tripo (si carga, sustituye al generado)
-if(GL&&!QS.has("volproc"))get("isla-volcan",m=>{if(!m)return;const c=m.clone();const W=+(QS.get("volw")||78),HY=+(QS.get("volh")||1);c.scale.set(W,W*HY,W);c.position.set(VOL.x,-1.5,VOL.z);c.rotation.y=VOL.q*1.3;
+if(GL&&!QS.has("volproc"))get("isla-volcan",m=>{if(!m)return;const c=m.clone();const W=+(QS.get("volw")||54),HY=+(QS.get("volh")||1.45);c.scale.set(W,W*HY,W);window.VOLM=c;c.position.set(VOL.x,-1.5,VOL.z);c.rotation.y=VOL.q*1.3;
  c.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace("#include <fog_fragment>","#ifdef USE_FOG\nfloat vfd=fogDensity*.3;float vf=1.0-exp(-vfd*vfd*fogDepth*fogDepth);gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor*.8,vf);\n#endif")}}});
  scene.add(c);const V=window.VOLG;V.children.forEach(o=>{if(o.isMesh)o.visible=false});
  const bb=new THREE.Box3().setFromObject(c);V.position.y=bb.max.y-11.5*K+2});
@@ -509,7 +528,7 @@ function hostPlace(i,m,auto){const G=H.G;if(!G||G.phase!=="place"||draftWho(G)!=
  else{if(!terrOpts(G,i).includes(m.k))return;const T=G.terr[m.k];T[T.indexOf(-1)]=i;p.placed=2;const mats=new Set([TMAT[o.t]]);neighbors(o.c).forEach(n=>{const x=ISLMAP[key(n)];if(x&&x.port===undefined)mats.add(TMAT[x.t])});mats.forEach(mm=>addStock(p,mm,1));p.fame=famOf(G,i);
   txt=`${p.name} planta su primera bandera${auto?" (se le acabó el tiempo)":""} y se lleva ${[...mats].map(mm=>MATS.find(x=>x[0]===mm)[1].toLowerCase()).join(", ")}.`}
  Net.toAll({t:"placed",i,txt});G.draft.step++;hostDraftNext()}
-function hostDraftNext(){const G=H.G;clearTimeout(H.dtid);if(G.draft.step>=G.draft.order.length){G.phase="orders";G.draft=null;G.players.forEach(p=>{if(!p.placed)p.placed=2});Net.toAll({t:"state",G});hostArmTimer(12);return}hostDraftArm()}
+function hostDraftNext(){const G=H.G;clearTimeout(H.dtid);if(G.draft.step>=G.draft.order.length){G.phase="orders";G.draft=null;G.t0=Date.now();G.players.forEach(p=>{if(!p.placed)p.placed=2});Net.toAll({t:"state",G});hostArmTimer(12);return}hostDraftArm()}
 // ---------- puertos en 3D: muelle y bandera del dueño ----------
 function placePorts(){PORTS.forEach(o=>{const G=islandMeshes[key(o.c)];if(!G||G.userData.portOwner===o.home)return;if(GL&&!G.userData.glb)return;G.userData.portOwner=o.home;if(G.userData.portDeco){scene.remove(G.userData.portDeco)}if(o.home===undefined)return;
  const grp=new THREE.Group();scene.add(grp);G.userData.portDeco=grp;const c=CM[key(o.c)];const toC=new THREE.Vector3(-c.x,0,-c.z).normalize();const R=((G.children[0].userData.R)||1)*K;
@@ -527,7 +546,7 @@ function placeInfo(){if(GS.phase!=="place"||!GS.draft){plb.hidden=true;return}co
 setInterval(placeInfo,500);
 function placeOpts(){if(GS.phase!=="place"||!GS.draft||GS.draft.order[GS.draft.step]!==myIdx)return[];return GS.draft.step<GS.players.length?PORTS.filter(o=>GS.portOwner[o.port]<0):terrOpts(GS,myIdx).map(k=>ISLMAP[k])}
 let seenBak=null;
-function showPlace(){placeT0=Date.now();wasPlace=true;if(!seenBak){seenBak=new Set(seen);CELLS.forEach(c=>{if(c!==VOL)seen.add(key(c))})}PORTS.forEach(o=>reveal(o.c,2));myShip.visible=!!me().placed;updateVisibility();toggleMap(true);drawMap();placeInfo();showDice()}
+function showPlace(){placeT0=Date.now();wasPlace=true;if(!seenBak){seenBak=new Set(seen);CELLS.forEach(c=>seen.add(key(c)))}PORTS.forEach(o=>reveal(o.c,2));myShip.visible=!!me().placed;updateVisibility();toggleMap(true);drawMap();placeInfo();showDice()}
 function endPlace(){wasPlace=false;plb.hidden=true;diceEl.hidden=true;if(seenBak){seen.clear();seenBak.forEach(k=>seen.add(k));seenBak=null}myShip.visible=true;snapShips();reveal(cellOf(me().home),1);toggleMap(false);armDeadline(GS.timer?GS.timer*60+12:0);sndHit("drum");
  note(`¡Todos en su puerto! Empieza la ronda 1. Tu primer territorio ya produce. Abre Acciones (A) y traza tu ruta en el mapa (M).`,10)}
 
