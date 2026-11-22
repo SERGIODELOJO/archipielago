@@ -164,9 +164,14 @@ function hostMaybeResolve(){if(H.G.players.every(p=>p.ready||p.gone))setTimeout(
 function hostStart(){if(H.G)return;const np=H.players.length;const deck=[];CARD_LIST.forEach(c=>{for(let i=0;i<c[3];i++)deck.push(c[0])});shuffle(deck);
  H.G={seed:1000+Math.floor(Math.random()*90000),np,round:1,phase:"orders",target:[6,9,12][H.len]+(np<=2?-1:np>=5?1:0),treasures:1,volBy:-1,
   timer:H.timer,terr:null,fort:{},bld:{},players:H.players.map((p,i)=>({id:p.id,name:p.name,i,cap:p.cap,hab:p.hab||0,pir:0,mer:0,fame:0,bonus:0,rum:3,mat:{madera:1,lona:1,hierro:0,perlas:0},crew:0,fl:[],ship:"balandra",cannons:2,hand:[deck.pop(),deck.pop(),deck.pop()].slice(0,3),cell:null,home:null,ready:false,looted:[],hideFrom:{},got:false,faroles:false,gone:false})),deck,winner:-1};
- {const NPORT=np+(np<=4?2:3);H.G.portOwner=Array(NPORT).fill(-1);if(QS.has("noplace")){H.G.players.forEach((p,i)=>{H.G.portOwner[i]=i;p.placed=2})}else{H.G.phase="place";const o=shuffle(H.G.players.map(p=>p.i));H.G.draft={step:0,order:o.concat(o.slice().reverse())}}}
+ {const NPORT=np+(np<=4?2:3);H.G.portOwner=Array(NPORT).fill(-1);if(QS.has("noplace")){H.G.players.forEach((p,i)=>{H.G.portOwner[i]=i;p.placed=2})}else{H.G.phase="place";const dz=diceOrder(H.G.players.map(p=>p.i));const o=dz.order;H.G.draft={step:0,order:o.concat(o.slice().reverse()),dice:dz.rolls}}}
  {const ms=shuffle(Object.keys(MIS));H.G.mkt=rollMkt(null);H.G.sold={};H.G.players.forEach((p,i)=>{if(p.hab===6)p.cannons++;if(p.hab===7&&deck.length)p.hand.push(deck.pop());p.mis=ms[i%ms.length];p.misOk=false;p.st={bw:0,aw:0}})}H.G.pacts=[];
  H.orders={};Net.toAll({t:"start",G:H.G});hostArmTimer(12)}
+// tirada de 2 dados por jugador para el orden de colocación; los empates vuelven a tirar entre ellos
+function diceOrder(ids){const rolls={};const d6=()=>1+Math.floor(Math.random()*6);
+ const go=g=>{const r=g.map(i=>{const t=[d6(),d6()];(rolls[i]=rolls[i]||[]).push(t);return{i,s:t[0]+t[1]}}).sort((a,b)=>b.s-a.s);const out=[];
+  for(let k=0;k<r.length;){let e=k;while(e<r.length&&r[e].s===r[k].s)e++;const grp=r.slice(k,e).map(x=>x.i);out.push(...(grp.length>1?go(grp):grp));k=e}return out};
+ return{order:go(ids),rolls}}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const CARD_LIST=[["viento-a-favor","Viento a favor","ventaja",3,"Este turno navegas hasta 5 casillas."],
  ["vigia-de-aguila","Vigía de águila","ventaja",2,"Esta ronda ves todos los barcos a 4 casillas o menos."],

@@ -28,7 +28,7 @@ const PORTS=ISL.filter(o=>o.port!==undefined);
 function applyPorts(G){PORTS.forEach(o=>{const ow=((G&&G.portOwner)||[])[o.port];o.home=ow>=0?ow:undefined})}
 // casilla de salida: junto al puerto elegido (o una provisional, oculta, mientras se elige)
 const setCells=G=>G&&G.players.forEach((p,i)=>{if(!p.cell){const j=(G.portOwner||[]).indexOf(i);const s=START[j>=0?j:i%NPORT];p.cell=[s.q,s.r];p.home=p.cell.slice()}});
-setCells(GS);if(Net.isHost&&H.G){setCells(H.G);if(H.G.phase==="place")setTimeout(()=>hostDraftArm(),3000)}
+setCells(GS);if(Net.isHost&&H.G){setCells(H.G);if(H.G.phase==="place")setTimeout(()=>hostDraftArm(),H.G.draft&&H.G.draft.dice?13000:3000)}
 applyPorts(GS);
 const cellOf=a=>CM[a[0]+","+a[1]];
 {const mk=G=>{if(G&&!G.terr){G.terr={};G.fort={};G.bld=G.bld||{};ISL.forEach(o=>{if(o.port===undefined){G.terr[key(o.c)]=Array(slotsOf(o)).fill(-1);G.fort[key(o.c)]=Array(slotsOf(o)).fill(0)}})}};if(Net.isHost&&H.G)mk(H.G);mk(GS)}

@@ -518,9 +518,41 @@ function placeInfo(){if(GS.phase!=="place"||!GS.draft){plb.hidden=true;return}co
  plb.innerHTML=`<div class="t">${mine?`<b>Te toca:</b> ${port?"elige tu puerto de salida":"elige tu primer territorio (a 2 casillas o menos de tu puerto)"}`:`Turno de <b style="color:${PCOL[i]}">${esc(p.name)}</b>: ${port?"elige puerto":"elige territorio"}`} · ${left}s</div><div class="s">Colocación en serpiente: ${GS.draft.order.map((j,n)=>`<span style="color:${PCOL[j]};${n===GS.draft.step?"text-decoration:underline;font-weight:bold":n<GS.draft.step?"opacity:.45":""}">${esc(GS.players[j].name)}</span>`).join(" → ")}</div>`}
 setInterval(placeInfo,500);
 function placeOpts(){if(GS.phase!=="place"||!GS.draft||GS.draft.order[GS.draft.step]!==myIdx)return[];return GS.draft.step<GS.players.length?PORTS.filter(o=>GS.portOwner[o.port]<0):terrOpts(GS,myIdx).map(k=>ISLMAP[k])}
-function showPlace(){placeT0=Date.now();wasPlace=true;PORTS.forEach(o=>reveal(o.c,2));myShip.visible=!!me().placed;updateVisibility();toggleMap(true);drawMap();placeInfo()}
-function endPlace(){wasPlace=false;plb.hidden=true;myShip.visible=true;snapShips();reveal(cellOf(me().home),1);toggleMap(false);armDeadline(GS.timer?GS.timer*60+12:0);sndHit("drum");
+let seenBak=null;
+function showPlace(){placeT0=Date.now();wasPlace=true;if(!seenBak){seenBak=new Set(seen);CELLS.forEach(c=>seen.add(key(c)))}PORTS.forEach(o=>reveal(o.c,2));myShip.visible=!!me().placed;updateVisibility();toggleMap(true);drawMap();placeInfo();showDice()}
+function endPlace(){wasPlace=false;plb.hidden=true;diceEl.hidden=true;if(seenBak){seen.clear();seenBak.forEach(k=>seen.add(k));seenBak=null}myShip.visible=true;snapShips();reveal(cellOf(me().home),1);toggleMap(false);armDeadline(GS.timer?GS.timer*60+12:0);sndHit("drum");
  note(`¡Todos en su puerto! Empieza la ronda 1. Tu primer territorio ya produce. Abre Acciones (A) y traza tu ruta en el mapa (M).`,10)}
+
+// ---------- tirada de dados para el orden de colocación ----------
+const diceEl=document.createElement("div");diceEl.className="dicebox";diceEl.hidden=true;document.body.appendChild(diceEl);let diceShown=false;
+{const st=document.createElement("style");st.textContent=`.dicebox{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(20,12,6,.72),rgba(0,0,0,.9));font-family:"IM Fell English",Georgia,serif;color:#f3e6c8;cursor:pointer}
+.dicebox .in{background:rgba(28,18,10,.94);border:1px solid rgba(224,180,90,.55);border-radius:18px;padding:22px 30px;min-width:min(560px,92vw);max-width:92vw;box-shadow:0 10px 50px #000}
+.dicebox h2{font-family:"IM Fell English SC",Georgia,serif;font-weight:normal;margin:0 0 4px;text-align:center;font-size:30px;color:#e0b45a}.dicebox .sub{text-align:center;opacity:.8;margin-bottom:16px}
+.drow{display:flex;align-items:center;gap:14px;padding:8px 10px;border-radius:12px;transition:all .5s}.drow .nm{flex:1;font-size:21px}.drow .sum{font-size:28px;width:44px;text-align:right;color:#e0b45a;opacity:0;transition:opacity .3s}.drow.done .sum{opacity:1}.drow .ds{display:flex;gap:7px;align-items:center}.drow .tie{font-size:13px;opacity:.7;margin:0 4px}
+.drow.me{background:rgba(224,180,90,.12)}.drow .pos{font-size:22px;width:34px;color:#e0b45a}
+.die{width:38px;height:38px;border-radius:8px;background:linear-gradient(145deg,#fbf3df,#d9c9a3);box-shadow:inset -3px -3px 6px #0003,0 3px 6px #0008;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:5px;box-sizing:border-box}
+.die i{width:7px;height:7px;border-radius:50%;background:#2a1a10;place-self:center;visibility:hidden}.die i.on{visibility:visible}.die.sm{width:28px;height:28px;padding:4px}.die.sm i{width:5px;height:5px}
+.die.roll{animation:droll .18s linear infinite}@keyframes droll{0%{transform:rotate(0) translateY(0)}50%{transform:rotate(180deg) translateY(-6px)}100%{transform:rotate(360deg) translateY(0)}}
+.dicebox .fin{text-align:center;margin-top:14px;font-size:18px;opacity:0;transition:opacity .5s}.dicebox .fin.on{opacity:1}`;document.head.appendChild(st)}
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function dieHTML(v,sm){return `<div class="die${sm?" sm":""}">${Array.from({length:9},(_,k)=>`<i class="${PIPS[v].includes(k)?"on":""}"></i>`).join("")}</div>`}
+function setDie(el,v){el.querySelectorAll("i").forEach((p,k)=>p.classList.toggle("on",PIPS[v].includes(k)))}
+function showDice(){const D=GS.draft&&GS.draft.dice;if(diceShown||!D)return;diceShown=true;const np=GS.players.length,order=GS.draft.order.slice(0,np);
+ diceEl.innerHTML=`<div class="in"><h2>¿Quién elige primero?</h2><div class="sub">Cada capitán tira dos dados. El que más saca elige puerto el primero.</div><div class="rows"></div><div class="fin"></div></div>`;
+ const rowsEl=diceEl.querySelector(".rows"),rows={};
+ GS.players.forEach((p,i)=>{const r=document.createElement("div");r.className="drow"+(i===myIdx?" me":"");r.innerHTML=`<span class="pos"></span><span class="nm" style="color:${PCOL[i]}">${esc(p.name)}</span><span class="ds">${dieHTML(1)}${dieHTML(1)}</span><span class="sum"></span>`;rowsEl.appendChild(r);rows[i]=r});
+ diceEl.hidden=false;const Q=[];const at=(t,f)=>Q.push({t,f});let tt=0,last=performance.now();const tick=()=>{const n=performance.now();tt+=Math.min(n-last,250);last=n;Q.sort((x,y)=>x.t-y.t);while(Q.length&&Q[0].t<=tt)Q.shift().f();if(Q.length)requestAnimationFrame(tick)};
+ GS.players.forEach((p,i)=>{const R=D[i]||[[1,1]];const dd=rows[i].querySelectorAll(".ds .die");dd.forEach(d=>d.classList.add("roll"));
+  let rolling=true;const spin=()=>{if(!rolling)return;dd.forEach(d=>setDie(d,1+Math.floor(Math.random()*6)));setTimeout(spin,90)};spin();
+  at(1600+i*450,()=>{rolling=false;dd.forEach((d,k)=>{d.classList.remove("roll");setDie(d,R[0][k])});rows[i].querySelector(".sum").textContent=R[0][0]+R[0][1];rows[i].classList.add("done");try{sndHit("cannon")}catch(e){}
+   if(R.length>1){const ds=rows[i].querySelector(".ds");R.slice(1).forEach((t,n)=>at(1600+i*450+900*(n+1),()=>{ds.insertAdjacentHTML("beforeend",`<span class="tie">empate →</span>${dieHTML(t[0],1)}${dieHTML(t[1],1)}`);rows[i].querySelector(".sum").textContent=t[0]+t[1]}))}})});
+ const tEnd=1600+np*450+900*Math.max(0,...GS.players.map((p,i)=>((D[i]||[]).length||1)-1))+500;
+ at(tEnd,()=>{const h=rowsEl.offsetHeight;rowsEl.style.position="relative";rowsEl.style.height=h+"px";const rh=h/np;
+  GS.players.forEach((p,i)=>{rows[i].style.position="absolute";rows[i].style.left=0;rows[i].style.right=0;rows[i].style.top=(i*rh)+"px"});
+  requestAnimationFrame(()=>order.forEach((i,n)=>{rows[i].style.top=(n*rh)+"px";rows[i].querySelector(".pos").textContent=(n+1)+"º"}));
+  const f=diceEl.querySelector(".fin");f.innerHTML=`Eligen puerto en este orden. Después, <b>a la inversa</b>, cada uno elige su primera isla: <b style="color:${PCOL[order[np-1]]}">${esc(GS.players[order[np-1]].name)}</b> repite.`;f.classList.add("on");try{sndHit("drum")}catch(e){}
+  at(tEnd+6000,()=>{diceEl.hidden=true})});requestAnimationFrame(tick);
+ diceEl.onclick=()=>{if(diceEl.querySelector(".fin.on"))diceEl.hidden=true}}
 
 snapShips();renderOrders();requestAnimationFrame(frame);placePorts();if(GS.phase==="place")setTimeout(showPlace,1500);
 if(introK>=1)introDone();
