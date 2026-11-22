@@ -124,7 +124,7 @@ const CAPS=[{n:"Brasa",c:"#c0392b"},{n:"Bruno",c:"#2e86c1"},{n:"Nadia",c:"#d4ac0
 const HAB=[{n:"Fuego",i:"🔥",x:"+2 de fuerza cuando asaltas un territorio."},{n:"Carpintero",i:"🪚",x:"Todo lo que cuesta madera te cuesta 1 madera menos."},{n:"Ojo de halcón",i:"👁",x:"Ves los barcos 1 casilla más lejos y oyes un rumor más cada ronda."},
  {n:"Contrabandista",i:"🗝",x:"Cambias 2 por 1 en cualquier sitio y robas 1 material más al ganar un abordaje."},{n:"Colono",i:"⚑",x:"Colonizar no te cuesta ron y tus territorios defienden con +1."},{n:"Viento en popa",i:"💨",x:"Navegas 1 casilla más cada ronda."},
  {n:"Artillero",i:"💣",x:"Empiezas con 1 cañón más y fundir cañones te cuesta 1 hierro en vez de 2."},{n:"Tahúr",i:"🃏",x:"Empiezas con 1 carta más y las cartas te cuestan 1 ron menos."}];
-const capOf=p=>p.hab||0;
+const capOf=p=>p.hab||0;const HMAX=p=>capOf(p)===7?4:3;
 // misiones secretas: cada jugador recibe una al empezar; cumplirla da +2 de fama para siempre
 const MIS={hierro:{n:"Señor del hierro",x:"Ten territorios en 2 islas de hierro a la vez."},perlas:{n:"Cazador de perlas",x:"Ten territorios en 2 islas de perlas a la vez."},isla:{n:"Rey de una isla",x:"Controla entera una isla de 3 territorios."},
  fuertes:{n:"Fortaleza",x:"Ten 3 fuertes a la vez."},edif:{n:"Constructor",x:"Ten 3 edificios a la vez (almacén, muelle, torre o patrulla)."},almirante:{n:"Almirante",x:"Ten 2 escoltas a la vez."},
@@ -261,10 +261,10 @@ function hostRecv(from,m){
   const cl=o=>{const r={};Object.entries(o||{}).forEach(([k,n])=>{if(MATS.some(x=>x[0]===k)&&n>0)r[k]=Math.min(9,n|0)});return r};
   const o={id:Math.random().toString(36).slice(2,8),from:i,to:j,kind:m.kind==="pact"?"pact":"trade",give:cl(m.give),get:cl(m.get)};if(o.kind==="trade"&&(!Object.keys(o.give).length||!Object.keys(o.get).length))return;
   H.offers=H.offers||{};H.offers[o.id]=o;Net.toOne(P[j].id,{t:"offer",o});Net.toOne(P[i].id,{t:"offerSent",o});return}
- if((m.t==="ransom"||m.t==="recruit")&&H.G){const G=H.G,P=G.players,i=P.findIndex(p=>p.id===from);const h=(G.hostages||[]).find(x=>x.id===m.h);if(i<0||!h)return;const Hb=P[h.by],Ho=P[h.of];
+ if((m.t==="ransom"||m.t==="recruit")&&H.G&&H.G.phase==="orders"){const G=H.G,P=G.players,i=P.findIndex(p=>p.id===from);const h=(G.hostages||[]).find(x=>x.id===m.h);if(i<0||!h)return;const Hb=P[h.by],Ho=P[h.of];
   if(m.t==="ransom"){if(h.of!==i||Ho.rum<3)return;Ho.rum-=3;Hb.rum+=3;Ho.crew=Math.min(4,(Ho.crew||0)+1);G.hostages=G.hostages.filter(x=>x!==h);Net.toAll({t:"state",G});Net.toAll({t:"msg",txt:`${Ho.name} paga 3 de ron de rescate a ${Hb.name} y recupera a su tripulante.`});return}
   if(h.by!==i||Hb.rum<1||(Hb.crew||0)>=4)return;Hb.rum-=1;Hb.crew=(Hb.crew||0)+1;ST(Hb,"reh");G.hostages=G.hostages.filter(x=>x!==h);Net.toAll({t:"state",G});Net.toAll({t:"msg",txt:`${Hb.name} pone a trabajar en su barco al rehén de ${Ho.name}.`});return}
- if(m.t==="offerAns"&&H.G){const P=H.G.players,o=(H.offers||{})[m.id];if(!o||P[o.to].id!==from)return;delete H.offers[m.id];const A=P[o.from],B=P[o.to];let ok=!!m.ok,why="";
+ if(m.t==="offerAns"&&H.G){const P=H.G.players,o=(H.offers||{})[m.id];if(!o||P[o.to].id!==from)return;delete H.offers[m.id];const A=P[o.from],B=P[o.to];let ok=!!m.ok,why="";if(ok&&H.G.phase!=="orders"){ok=false;why="La ronda ya se estaba resolviendo."}
   if(ok&&o.kind==="trade"){if(!canPay(A,o.give)||!canPay(B,o.get)){ok=false;why="A alguien ya no le llegaba el material."}else{Object.entries(o.give).forEach(([k,n])=>{addStock(A,k,-n);addStock(B,k,n)});Object.entries(o.get).forEach(([k,n])=>{addStock(B,k,-n);addStock(A,k,n)})}}
   if(ok&&o.kind==="pact"){H.G.pacts=(H.G.pacts||[]).filter(x=>!((x.a===o.from&&x.b===o.to)||(x.a===o.to&&x.b===o.from))).concat({a:o.from,b:o.to,until:H.G.round+2})}
   if(ok){A.mer=(A.mer||0)+1;B.mer=(B.mer||0)+1;Net.toAll({t:"state",G:H.G})}[A,B].forEach(p=>Net.toOne(p.id,{t:"offerRes",o,ok,why}));return}
@@ -290,7 +290,7 @@ function diceOrder(ids){const rolls={};const d6=()=>1+Math.floor(Math.random()*6
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const CARD_LIST=[["viento-a-favor","Viento a favor","ventaja",3,"Este turno navegas hasta 5 casillas."],
  ["vigia-de-aguila","Vigía de águila","ventaja",2,"Esta ronda ves todos los barcos a 4 casillas o menos."],
- ["remiendo-rapido","Cañón de bronce","ventaja",2,"Tu barco gana 1 cañón para siempre."],
+ ["remiendo-rapido","Cañón de bronce","ventaja",2,"Tu barco gana 1 cañón para siempre (máximo 6). Se retira de la partida al usarla."],
  ["contrabando","Contrabando","ventaja",2,"Ganas 3 barriles de ron."],
  ["botin-escondido","Botín escondido","ventaja",2,"Desentierras 3 materiales al azar."],
  ["carta-del-cartografo","Carta del cartógrafo","ventaja",1,"Descubres en tu mapa una zona camino del volcán."],
@@ -341,12 +341,12 @@ const costFor=(p,c,act)=>{c=Object.assign({},c||{});const k=capOf(p);if(k===1&&c
 const repOf=p=>{const a=p.pir||0,b=p.mer||0;return a>=3&&a>b?"pirata":b>=3&&b>a?"mercader":""};
 const REPN={pirata:"☠ Pirata temido",mercader:"⚖ Mercader honrado"};
 const tradeR=(p,home,give,mk)=>{let r=(home||FL(p).includes("mercante")||capOf(p)===3||repOf(p)==="mercader")?2:3;if(repOf(p)==="pirata")r++;if(mk&&give){if(give===mk.want)r--;if(give===mk.glut)r++}return Math.max(1,r)};
-const AUC={canon:{n:"Cañón legendario",x:"+2 cañones para siempre.",f:p=>{p.cannons+=2}},
+const AUC={canon:{n:"Cañón legendario",x:"+2 cañones para siempre (máximo 6).",f:p=>{p.cannons=Math.min(6,p.cannons+2)}},
  mapa:{n:"Mapa del volcán",x:"Se dibuja en tu mapa dónde está el volcán.",f:(p,E)=>E(p.i,{k:"card",card:"mapa",txt:"El mapa de la subasta revela el escondite del volcán.",reveal:[[[VOL.q,VOL.r],1]]})},
  fantasma:{n:"Bergantín fantasma",x:"Un bergantín se une gratis a tu flota (+3 de fuerza).",f:p=>{if(FL(p).length<FLMAX)p.fl=FL(p).concat(["bergantin"]);else p.cannons+=2}},
  patente:{n:"Patente de corso",x:"+1 de fama para siempre.",f:p=>{p.bonus=(p.bonus||0)+1}},
  bodega:{n:"Bodega repleta",x:"+2 de madera, lona, hierro y perlas.",f:p=>{["madera","lona","hierro","perlas"].forEach(m=>addStock(p,m,2))}},
- baraja:{n:"Baraja marcada",x:"Robas 2 Cartas de Fortuna.",f:(p,E,G)=>{for(let k=0;k<2;k++){if(!G.deck.length){G.deck=shuffle(G.discard||[]);G.discard=[]}const d=G.deck.pop();if(d){p.hand.push(d);E(p.i,{k:"drew",card:d})}}}}};
+ baraja:{n:"Baraja marcada",x:"Robas 2 Cartas de Fortuna (si te caben en la mano).",f:(p,E,G)=>{for(let k=0;k<2;k++){if(p.hand.length>=HMAX(p))break;if(!G.deck.length){G.deck=shuffle(G.discard||[]);G.discard=[]}const d=G.deck.pop();if(d){p.hand.push(d);E(p.i,{k:"drew",card:d})}}}}};
 const LAWS={puertos:{n:"Puertos cerrados",x:"Solo se puede cambiar materiales en tu puerto o en un muelle."},
  ron:{n:"Ron para todos",x:"Cada ronda todos ganáis 1 barril de ron."},
  tregua:{n:"Tregua de los fuertes",x:"Prohibido asaltar territorios con fuerte."},
