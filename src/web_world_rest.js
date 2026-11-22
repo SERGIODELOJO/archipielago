@@ -163,10 +163,13 @@ setInterval(()=>{const el=$("tmr");if(!deadline||GS.phase!=="orders"||document.b
  if(sl<=2&&!me().ready&&!autoSent){autoSent=true;note("¡Se acabó el tiempo! Se envían tus órdenes tal como están.",5);$("oGo").click()}},500);
 
 // ---------- mapa personal ----------
-const mapc=$("mapc"),mx=mapc.getContext("2d");
+const mapc=$("mapc"),mx=mapc.getContext("2d");let MSC=1;
+// el pergamino se dibuja a la resolución real de la pantalla (nítido en monitores grandes y retina)
+function sizeMap(){const avail=Math.min(innerWidth*.96,(innerHeight-90)*1100/860);const w=avail*(devicePixelRatio||1);const s=Math.min(3,Math.max(1,w/1100));if(Math.abs(s-MSC)>.05||mapc.width!==Math.round(1100*s)){MSC=s;mapc.width=Math.round(1100*s);mapc.height=Math.round(860*s)}}
+addEventListener("resize",()=>{if(mapOpen){sizeMap();drawMap()}});
 const MS=Math.max(34,Math.min(1100/(Math.sqrt(3)*(2*RAD+1)+2),860/(1.5*(2*RAD)+4)));let MC={q:0,r:0};
 const mP=c=>[550+MS*Math.sqrt(3)*((c.q-MC.q)+(c.r-MC.r)/2),430+MS*1.5*(c.r-MC.r)];
-const parchBase=(()=>{const cv=document.createElement("canvas");cv.width=1100;cv.height=860;const x=cv.getContext("2d");const g=x.createRadialGradient(550,430,100,550,430,700);g.addColorStop(0,"#ead6a6");g.addColorStop(.75,"#d5b780");g.addColorStop(1,"#9c7442");x.fillStyle=g;x.fillRect(0,0,1100,860);
+const parchBase=(()=>{const cv=document.createElement("canvas");cv.width=2200;cv.height=1720;const x=cv.getContext("2d");x.scale(2,2);const g=x.createRadialGradient(550,430,100,550,430,700);g.addColorStop(0,"#ead6a6");g.addColorStop(.75,"#d5b780");g.addColorStop(1,"#9c7442");x.fillStyle=g;x.fillRect(0,0,1100,860);
  for(let i=0;i<180;i++){const cx=rnd()*1100,cy=rnd()*860,r=15+rnd()*90;const sg=x.createRadialGradient(cx,cy,0,cx,cy,r);sg.addColorStop(0,`rgba(120,80,30,${.03+rnd()*.05})`);sg.addColorStop(1,"rgba(120,80,30,0)");x.fillStyle=sg;x.fillRect(cx-r,cy-r,2*r,2*r)}
  x.strokeStyle="rgba(70,48,25,.22)";x.lineWidth=2;for(let i=0;i<120;i++){const px=rnd()*1100,py=rnd()*860;x.beginPath();x.moveTo(px,py);x.quadraticCurveTo(px+9,py-7,px+18,py);x.quadraticCurveTo(px+27,py-7,px+36,py);x.stroke()}
  x.font="italic 30px 'IM Fell English',Georgia,serif";x.fillStyle="rgba(70,45,22,.4)";x.textAlign="center";x.fillText("Terra incognita",760,560);x.fillText("Hic sunt dracones",330,700);return cv})();
@@ -198,7 +201,7 @@ function drawVolcano(x,c){const [px,py]=mP(c);const R=MS*.95;x.save();x.translat
  x.fillStyle="#c8401a";x.beginPath();x.ellipse(px,py-R*.75,R*.21,R*.07,0,0,6.28);x.fill();x.strokeStyle="#d8501a";x.lineWidth=2.5;x.beginPath();x.moveTo(px-R*.05,py-R*.72);x.quadraticCurveTo(px-R*.2,py-R*.2,px-R*.45,py+R*.3);x.stroke();
  x.fillStyle="rgba(90,80,75,.45)";for(let i=0;i<5;i++){x.beginPath();x.arc(px+i*7,py-R*.95-i*12,8+i*4,0,6.28);x.fill()}
  x.font="italic 16px 'IM Fell English',Georgia,serif";x.textAlign="center";x.fillStyle="rgba(110,30,20,.95)";x.fillText(GS.treasures>0?"Volcán · tesoro":"Volcán · saqueado",px,py+R*.4+18)}
-function drawMap(){const x=mx;x.drawImage(parchBase,0,0);const mc=cellOf(me().cell);MC=mc;
+function drawMap(){const x=mx;x.setTransform(MSC,0,0,MSC,0,0);x.drawImage(parchBase,0,0,1100,860);const mc=cellOf(me().cell);MC=mc;
  CELLS.forEach(c=>{if(!seen.has(key(c)))return;hexPath(x,c,1.03);x.fillStyle="rgba(80,120,125,.22)";x.fill()});
  // dominios: cada isla pertenece a quien tenga más territorios; su zona incluye el mar de alrededor
  const zone={};{const sc={};const add=(k,o,n)=>{(sc[k]=sc[k]||{})[o]=(sc[k][o]||0)+n};
@@ -226,7 +229,7 @@ function drawMap(){const x=mx;x.drawImage(parchBase,0,0);const mc=cellOf(me().ce
  x.font="34px 'IM Fell English SC',Georgia,serif";x.fillStyle="rgba(45,25,10,.85)";x.textAlign="left";x.fillText("Carta de "+me().name,36,826);
  x.font="italic 19px 'IM Fell English',Georgia,serif";x.fillText(GS.phase==="orders"&&!me().ready?`Toca casillas contiguas para trazar tu ruta (hasta ${maxRoute()}). ✕ = cofre sin abrir.`:`${seen.size} de ${CELLS.length} casillas exploradas`,36,44)}
 let mapOpen=false,prevPitch=0,mapTimer=0;function toggleMap(v){const want=v===undefined?!mapOpen:v;if(want===mapOpen)return;mapOpen=want;clearTimeout(mapTimer);
- if(mapOpen){setSpy(false);prevPitch=pitchT;pitchT=-.75;drawMap();mapTimer=setTimeout(()=>$("mapw").classList.add("on"),240)}else{$("mapw").classList.remove("on");pitchT=prevPitch}}
+ if(mapOpen){setSpy(false);prevPitch=pitchT;pitchT=-.75;sizeMap();drawMap();mapTimer=setTimeout(()=>$("mapw").classList.add("on"),240)}else{$("mapw").classList.remove("on");pitchT=prevPitch}}
 $("bMap").onclick=()=>toggleMap(true);$("bClose").onclick=()=>{toggleMap(false);renderOrders()};$("bClr").onclick=()=>{route=[];drawMap();renderOrders()};
 mapc.addEventListener("click",e=>{const r=mapc.getBoundingClientRect();const X=(e.clientX-r.left)*1100/r.width,Y=(e.clientY-r.top)*860/r.height;
  let best=null,bd=MS*MS;routeOpts().forEach(c=>{const [px,py]=mP(c);const d=(px-X)**2+(py-Y)**2;if(d<bd){bd=d;best=c}});if(best){route.push(best);drawMap();renderOrders()}});

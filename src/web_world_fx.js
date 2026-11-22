@@ -61,7 +61,7 @@ async function fxBattle(e){const others=(e.with||[]).filter(j=>j!==myIdx);const 
  const caps=await Promise.all([GS.players[myIdx].cap,GS.players[j].cap].map(c=>new Promise(r=>animCap(c,r))));
  const statics=[ua.cap,ub.cap].filter(Boolean);statics.forEach(o=>o.visible=false);
  const won=!e.lost&&!e.txt.startsWith("Abordaje igualado"),tie=e.txt.startsWith("Abordaje igualado");
- if(caps[0]&&caps[1]){const [ca,cb2]=caps;[ca,cb2].forEach((c,n)=>{scene.add(c.m);c.m.position.copy(mid).addScaledVector(side,n?1.2:-1.2).setY(deck+.75);c.m.rotation.y=Math.atan2(n?-side.x:side.x,n?-side.z:side.z);c.play("slash")});
+ if(caps[0]&&caps[1]){const [ca,cb2]=caps;[ca,cb2].forEach((c,n)=>{scene.add(c.m);c.m.position.copy(mid).addScaledVector(side,n?1.55:-1.55).setY(deck+.75);c.m.rotation.y=Math.atan2(n?-side.x:side.x,n?-side.z:side.z);c.play("slash")});
   const crew=await Promise.all([0,1,2,3].map(()=>new Promise(r=>animModel("tripulante-artillero-animada",CAPH*.95,r))));
   crew.forEach((c,n)=>{if(!c)return;const S=n<2?A:Bs;const lp=new THREE.Vector3(n%2?-3.5:3.5,0,n<2?1.2:1.2);S.updateMatrixWorld();const wp=S.localToWorld(lp);c.m.position.copy(wp).setY(deck+.1);const d=n<2?side:side.clone().negate();c.m.rotation.y=Math.atan2(d.x,d.z);scene.add(c.m);c.play(n%2?"slash":"cheer")});
   for(let k=0;k<6;k++){await wait(520);const sp=mid.clone().setY(deck+2.4);puff(sp.x,sp.y,sp.z,"#ffe080",1.4,.25);flash.position.copy(sp);flash.intensity=3;sndHit("clang")}
